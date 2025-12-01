@@ -17,7 +17,7 @@ const env = process.env.NODE_ENV || 'development';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: `.env${env === 'development' ? '' : '.' + env}`,
+      envFilePath: env === 'production' ? '.env' : `.env.${env}`,
       isGlobal: true, // ConfigService available globally
     }),
     ConfigWrapperModule,

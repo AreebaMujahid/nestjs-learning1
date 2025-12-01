@@ -4,10 +4,10 @@ import { ConfigService } from '@nestjs/config';
 export class DatabaseConfiguration {
   constructor(private readonly configService: ConfigService) {}
   get host(): string {
-    return this.configService.getOrThrow<string>('DB_HOST') ?? 'localhost';
+    return this.configService.getOrThrow<string>('DB_HOST');
   }
   get port(): number {
-    return this.configService.getOrThrow<number>('DB_PORT') ?? 5432;
+    return this.configService.getOrThrow<number>('DB_PORT');
   }
   get name(): string {
     return this.configService.getOrThrow<string>('DB_NAME');

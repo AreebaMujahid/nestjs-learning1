@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { ID } from '@nestjs/graphql';
 import { Crew } from 'src/modules/crew/entity/crew.entity';
+import type { GeoPoint } from 'src/shared/types/geojson.type';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn(ID)
@@ -56,11 +57,11 @@ export class User {
   @Column({ nullable: true })
   provider?: string;
 
-  @Column({ name: 'boat_name' })
-  boatName: string;
+  @Column({ name: 'boat_name', nullable: true })
+  boatName?: string;
 
-  @Column({ name: 'contact_number' })
-  contactNumber: string;
+  @Column({ name: 'contact_number', nullable: true })
+  contactNumber?: string;
 
   @Column({ name: 'owner_captain', nullable: true })
   ownerCaptain?: string;
@@ -85,7 +86,7 @@ export class User {
     nullable: true,
   })
   @Index('idx_user_current_location', { spatial: true })
-  currentLocation?: { type: 'Point'; coordinates: [number, number] };
+  currentLocation?: GeoPoint;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt: Date;

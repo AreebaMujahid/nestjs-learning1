@@ -10,7 +10,7 @@ const configurations = [DatabaseConfiguration];
       validationSchema,
     }),
   ],
-  exports: [DatabaseConfiguration, ...configurations],
-  providers: [DatabaseConfiguration, ...configurations],
+  exports: [...configurations],
+  providers: [...configurations],
 })
 export class ConfigWrapperModule {}

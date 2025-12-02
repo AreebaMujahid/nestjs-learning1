@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { ID } from '@nestjs/graphql';
 import { Crew } from 'src/modules/crew/entity/crew.entity';
-import type { GeoPoint } from 'src/shared/types/geojson.type';
+import type { GeoPoint } from 'src/utilities/types/geojson.type';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn(ID)
@@ -38,9 +38,6 @@ export class User {
 
   @Column({ name: 'is_profile_complete', default: false })
   isProfileComplete: boolean;
-
-  @Column()
-  role: string;
 
   @Column({ name: 'active_otp', nullable: true })
   activeOtp?: string;

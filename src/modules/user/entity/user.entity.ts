@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { ID } from '@nestjs/graphql';
 import { Crew } from 'src/modules/crew/entity/crew.entity';
-import type { GeoPoint } from 'src/shared/types/geojson.type';
+import type { GeoPoint } from 'src/utilities/types/geojson.type';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn(ID)

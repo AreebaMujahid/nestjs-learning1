@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { SignUpInput } from './dto/signup.input.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -7,6 +12,8 @@ import * as bcrypt from 'bcrypt';
 import { JwtAuthService } from '../shared/jwt/jwt.service';
 import { JwtTokenPurpose } from 'src/utilities/enums/jwt-token-purpose';
 import { ConfigService } from '@nestjs/config';
+import { OtpPurpose } from 'src/utilities/enums/otp-purpose';
+import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
 
 @Injectable()
 export class AuthService {
@@ -38,6 +45,11 @@ export class AuthService {
     );
     return { accessToken, refreshToken };
   }
+  private generateOtp() {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otpExpiry = Date.now() + 5 * 60 * 1000; // 5min expiry of otp
+    return { otp, otpExpiry };
+  }
   async signUp(signUpInput: SignUpInput) {
     const normalizedEmail = signUpInput.email.toLowerCase();
     const existingUser = await this.userRepository.findOne({
@@ -52,9 +64,45 @@ export class AuthService {
       email: normalizedEmail,
       password: hashedPassword,
     });
-    //todo: email verification using OTP
+    const result = this.generateOtp();
+    newUser.activeOtp = result.otp.toString();
+    newUser.otpDuration = result.otpExpiry;
+    newUser.otpPurpose = OtpPurpose.EMAIL_VERIFICATION;
     const savedUser = await this.userRepository.save(newUser);
     const tokens = this.generateAuthTokens(savedUser);
-    return Object.assign(tokens);
+    //return Object.assign(tokens);
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      otp: savedUser.activeOtp,
+    };
+  }
+  async verifyEmail(verifyOtpInput: VerifyOtpInput) {
+    const user = await this.userRepository.findOne({
+      where: { email: verifyOtpInput.email },
+    });
+    if (!user) {
+      throw new NotFoundException('User does not exists');
+    }
+    if (user.isEmailVerified) {
+      throw new BadRequestException('Email already verified');
+    }
+    if (!user.activeOtp || user.activeOtp !== verifyOtpInput.otp) {
+      throw new UnauthorizedException('Otp is invalid or incorrect');
+    }
+    //otp expiration check
+    const currentTime = Date.now();
+    if (user.otpDuration && currentTime > user.otpDuration) {
+      throw new UnauthorizedException('Otp has been expired');
+    }
+    //otp purpose check
+    if (user.otpPurpose !== OtpPurpose.EMAIL_VERIFICATION) {
+      throw new UnauthorizedException('Invalid Otp for email verification');
+    }
+    user.isEmailVerified = true;
+    //removing otp from user object , after email verification
+    user.activeOtp = '';
+    const savedUser = await this.userRepository.save(user);
+    return true;
   }
 }

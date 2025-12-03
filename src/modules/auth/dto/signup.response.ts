@@ -7,4 +7,7 @@ export class SignUpResponse {
 
   @Field()
   refreshToken: string;
+
+  @Field()
+  otp: string;
 }

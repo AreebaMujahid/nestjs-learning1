@@ -2,7 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import { IsStrongPassword } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export function strongPassword() {
+export function StrongPassword() {
   return applyDecorators(
     IsStrongPassword({
       minLength: 6,

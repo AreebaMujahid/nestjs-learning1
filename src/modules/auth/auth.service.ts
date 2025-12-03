@@ -14,6 +14,11 @@ import { JwtTokenPurpose } from 'src/utilities/enums/jwt-token-purpose';
 import { ConfigService } from '@nestjs/config';
 import { OtpPurpose } from 'src/utilities/enums/otp-purpose';
 import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
+import {
+  ForgotPasswordInput,
+  ForgotPasswordOtpInput,
+} from './dto/forgotPassword.input.dto';
+import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
 
 @Injectable()
 export class AuthService {
@@ -102,6 +107,83 @@ export class AuthService {
     user.isEmailVerified = true;
     //removing otp from user object , after email verification
     user.activeOtp = '';
+    user.otpPurpose = '';
+    const savedUser = await this.userRepository.save(user);
+    return true;
+  }
+  async sendForgotPasswordOtp(forgotPasswordOtpInput: ForgotPasswordOtpInput) {
+    const user = await this.userRepository.findOne({
+      where: { email: forgotPasswordOtpInput.email },
+    });
+    if (!user) {
+      throw new Error('User does not exists');
+    }
+    const otpCred = this.generateOtp();
+    user.activeOtp = otpCred.otp.toString();
+    user.otpDuration = otpCred.otpExpiry;
+    user.otpPurpose = OtpPurpose.FORGOT_PASSWORD;
+    const savedUser = await this.userRepository.save(user);
+    return {
+      otp: savedUser.activeOtp,
+    };
+  }
+  async forgotPasswordOtpVerify(
+    forgotPasswordOtpVerifyInput: ForgotPasswordOtpVerifyInput,
+  ) {
+    const user = await this.userRepository.findOne({
+      where: { email: forgotPasswordOtpVerifyInput.email },
+    });
+
+    if (!user) {
+      throw new Error('User with this email does not exists');
+    }
+
+    if (user.activeOtp && user.activeOtp !== forgotPasswordOtpVerifyInput.otp) {
+      throw new UnauthorizedException('Invalid or expired Otp');
+    }
+
+    //otp expire check
+    const currentTime = Date.now();
+    if (user.otpDuration && currentTime > user.otpDuration) {
+      throw new UnauthorizedException('Your Otp Expired');
+    }
+
+    const payload = this.jwtAuthService.getUserPayload(
+      user,
+      JwtTokenPurpose.PASSWORD_RESET,
+    );
+
+    const resetToken = this.jwtAuthService.generateToken(
+      payload,
+      this.config.getOrThrow('JWT_ACCESS_SECRET'),
+      this.config.getOrThrow('JWT_ACCESS_EXPIRY'),
+    );
+
+    user.activeOtp = '';
+    user.otpPurpose = '';
+    const savedUser = await this.userRepository.save(user);
+    return {
+      resetToken: resetToken,
+    };
+  }
+  async forgotPassword(forgotPasswordInput: ForgotPasswordInput) {
+    const payload = this.jwtAuthService.verifyToken(
+      forgotPasswordInput.resetToken,
+      this.config.getOrThrow('JWT_ACCESS_SECRET'),
+    );
+    const user = await this.userRepository.findOne({
+      where: { id: payload.userId },
+    });
+
+    if (!user) {
+      throw new Error('User does not exists');
+    }
+
+    if (payload.purpose !== JwtTokenPurpose.PASSWORD_RESET) {
+      throw new UnauthorizedException('Invalid token for password reset');
+    }
+
+    user.password = await bcrypt.hash(forgotPasswordInput.newPassword, 10);
     const savedUser = await this.userRepository.save(user);
     return true;
   }

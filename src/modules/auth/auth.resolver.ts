@@ -8,8 +8,8 @@ import {
   ForgotPasswordInput,
 } from './dto/forgotPassword.input.dto';
 import {
-  forgotPasswordOtpResponse,
-  forgotPasswordOtpVerifyResponse,
+  ForgotPasswordOtpResponse,
+  ForgotPasswordOtpVerifyResponse,
 } from './dto/forgotPassword.response';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
 @Resolver()
@@ -27,14 +27,14 @@ export class AuthResolver {
   async verifyEmail(@Args('verifyOtpInput') verifyOtpInput: VerifyOtpInput) {
     return this.authService.verifyEmail(verifyOtpInput);
   }
-  @Mutation(() => forgotPasswordOtpResponse)
+  @Mutation(() => ForgotPasswordOtpResponse)
   async sendForgotPasswordOtp(
     @Args('forgotPasswordOtpInput')
     forgotPasswordOtpInput: ForgotPasswordOtpInput,
   ) {
     return this.authService.sendForgotPasswordOtp(forgotPasswordOtpInput);
   }
-  @Mutation(() => forgotPasswordOtpVerifyResponse)
+  @Mutation(() => ForgotPasswordOtpVerifyResponse)
   async forgotPasswordOtpVerify(
     @Args('forgotPasswordOtpVerifyInput')
     forgotPasswordOtpVerifyInput: ForgotPasswordOtpVerifyInput,
@@ -43,7 +43,7 @@ export class AuthResolver {
       forgotPasswordOtpVerifyInput,
     );
   }
-  @Mutation()
+  @Mutation(() => Boolean)
   async forgotPassword(
     @Args('forgotPasswordInput') forgotPasswordInput: ForgotPasswordInput,
   ) {

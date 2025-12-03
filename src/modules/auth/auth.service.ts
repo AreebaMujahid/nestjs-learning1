@@ -139,13 +139,13 @@ export class AuthService {
     }
 
     if (user.activeOtp && user.activeOtp !== forgotPasswordOtpVerifyInput.otp) {
-      throw new UnauthorizedException('Invalid or expired Otp');
+      throw new BadRequestException('Invalid or expired Otp');
     }
 
     //otp expire check
     const currentTime = Date.now();
     if (user.otpDuration && currentTime > user.otpDuration) {
-      throw new UnauthorizedException('Your Otp Expired');
+      throw new BadRequestException('Your Otp Expired');
     }
 
     const payload = this.jwtAuthService.getUserPayload(
@@ -171,18 +171,18 @@ export class AuthService {
       forgotPasswordInput.resetToken,
       this.config.getOrThrow('JWT_ACCESS_SECRET'),
     );
+    if (!payload.userId) {
+      throw new UnauthorizedException('Invalid payload');
+    }
     const user = await this.userRepository.findOne({
       where: { id: payload.userId },
     });
-
     if (!user) {
       throw new Error('User does not exists');
     }
-
     if (payload.purpose !== JwtTokenPurpose.PASSWORD_RESET) {
       throw new UnauthorizedException('Invalid token for password reset');
     }
-
     user.password = await bcrypt.hash(forgotPasswordInput.newPassword, 10);
     const savedUser = await this.userRepository.save(user);
     return true;

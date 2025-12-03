@@ -2,13 +2,13 @@ import { ObjectType } from '@nestjs/graphql';
 import { Field } from '@nestjs/graphql';
 
 @ObjectType()
-export class forgotPasswordOtpResponse {
+export class ForgotPasswordOtpResponse {
   @Field()
   otp: string;
 }
 
 @ObjectType()
-export class forgotPasswordOtpVerifyResponse {
+export class ForgotPasswordOtpVerifyResponse {
   @Field()
   resetToken: string;
 }

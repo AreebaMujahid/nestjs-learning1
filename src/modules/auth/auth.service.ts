@@ -22,6 +22,7 @@ import {
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
 import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
 import { provider } from 'src/utilities/enums/provider';
+import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
 
 @Injectable()
 export class AuthService {
@@ -247,6 +248,20 @@ export class AuthService {
     } else {
       tokens = this.generateAuthTokens(user);
     }
+    return tokens;
+  }
+  async refreshAccessToken(refreshAccessTokenInput: RefreshAccessTokenInput) {
+    const payload = this.jwtAuthService.verifyToken(
+      refreshAccessTokenInput.refreshToken,
+      this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
+    );
+    const user = await this.userRepository.findOne({
+      where: { id: payload.userId },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Invalid payload');
+    }
+    const tokens = this.generateAuthTokens(user);
     return tokens;
   }
 }

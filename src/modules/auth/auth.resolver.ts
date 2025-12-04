@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { SignUpInput } from './dto/signup.input.dto';
 import { SignUpResponse } from './dto/signup.response';
 import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
+import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
 import {
   ForgotPasswordOtpInput,
   ForgotPasswordInput,
@@ -60,5 +61,12 @@ export class AuthResolver {
     @Args('loginGoogleInput') loginGoogleInput: LoginGoogleInput,
   ) {
     return this.authService.loginWithGoogle(loginGoogleInput);
+  }
+  @Mutation(() => LoginResponse)
+  async refreshAccessToken(
+    @Args('refreshAccessTokenInput')
+    refreshAccessTokenInput: RefreshAccessTokenInput,
+  ) {
+    return this.authService.refreshAccessToken(refreshAccessTokenInput);
   }
 }

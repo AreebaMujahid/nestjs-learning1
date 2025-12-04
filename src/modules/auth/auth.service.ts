@@ -87,8 +87,9 @@ export class AuthService {
     };
   }
   async verifyEmail(verifyOtpInput: VerifyOtpInput) {
+    const normalizedEmail = verifyOtpInput.email.toLowerCase();
     const user = await this.userRepository.findOne({
-      where: { email: verifyOtpInput.email },
+      where: { email: normalizedEmail },
     });
     if (!user) {
       throw new NotFoundException('User does not exists');
@@ -116,8 +117,9 @@ export class AuthService {
     return true;
   }
   async sendForgotPasswordOtp(forgotPasswordOtpInput: ForgotPasswordOtpInput) {
+    const normalizedEmail = forgotPasswordOtpInput.email.toLowerCase();
     const user = await this.userRepository.findOne({
-      where: { email: forgotPasswordOtpInput.email },
+      where: { email: normalizedEmail },
     });
     if (!user) {
       throw new Error('User does not exists');
@@ -134,8 +136,9 @@ export class AuthService {
   async forgotPasswordOtpVerify(
     forgotPasswordOtpVerifyInput: ForgotPasswordOtpVerifyInput,
   ) {
+    const normalizedEmail = forgotPasswordOtpVerifyInput.email.toLowerCase();
     const user = await this.userRepository.findOne({
-      where: { email: forgotPasswordOtpVerifyInput.email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
@@ -176,7 +179,7 @@ export class AuthService {
       this.config.getOrThrow('JWT_ACCESS_SECRET'),
     );
     if (!payload.userId) {
-      throw new UnauthorizedException('Invalid payload');
+      throw new BadRequestException('Invalid payload');
     }
     const user = await this.userRepository.findOne({
       where: { id: payload.userId },
@@ -185,15 +188,16 @@ export class AuthService {
       throw new Error('User does not exists');
     }
     if (payload.purpose !== JwtTokenPurpose.PASSWORD_RESET) {
-      throw new UnauthorizedException('Invalid token for password reset');
+      throw new BadRequestException('Invalid token for password reset');
     }
     user.password = await bcrypt.hash(forgotPasswordInput.newPassword, 10);
     const savedUser = await this.userRepository.save(user);
     return true;
   }
   async login(loginUserInput: LoginUserInput) {
+    const normalizedEmail = loginUserInput.email.toLowerCase();
     const user = await this.userRepository.findOne({
-      where: { email: loginUserInput.email },
+      where: { email: normalizedEmail },
     });
     if (!user) {
       throw new UnauthorizedException('Email does not exists');

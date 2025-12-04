@@ -14,12 +14,14 @@ import { JwtTokenPurpose } from 'src/utilities/enums/jwt-token-purpose';
 import { ConfigService } from '@nestjs/config';
 import { OtpPurpose } from 'src/utilities/enums/otp-purpose';
 import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
+import { OAuth2Client, TokenPayload } from 'google-auth-library';
 import {
   ForgotPasswordInput,
   ForgotPasswordOtpInput,
 } from './dto/forgotPassword.input.dto';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
-import { LoginUserInput } from './dto/login.input.dto';
+import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
+import { provider } from 'src/utilities/enums/provider';
 
 @Injectable()
 export class AuthService {
@@ -215,5 +217,36 @@ export class AuthService {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
     };
+  }
+  async loginWithGoogle({ idToken }: LoginGoogleInput) {
+    const verification = new OAuth2Client(
+      this.config.getOrThrow<string>('O_AUTH_CLIENT_ID'),
+    );
+    const ticket = await verification.verifyIdToken({
+      idToken,
+      audience: this.config.getOrThrow<string>('O_AUTH_CLIENT_ID'),
+    });
+    const payload = ticket.getPayload();
+    const { sub: googleID, email, name, profile } = payload as TokenPayload;
+    const user = await this.userRepository.findOne({
+      where: { email: email },
+    });
+    let tokens;
+    //if user not exists, create user
+    if (!user) {
+      const newUser = this.userRepository.create({
+        email,
+        fullName: name,
+        isEmailVerified: true,
+        provider: provider.GOOGLE,
+        profilePicture: profile,
+      });
+
+      const savedUser = await this.userRepository.save(newUser);
+      tokens = this.generateAuthTokens(savedUser);
+    } else {
+      tokens = this.generateAuthTokens(user);
+    }
+    return tokens;
   }
 }

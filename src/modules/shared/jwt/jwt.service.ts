@@ -10,18 +10,28 @@ export class JwtAuthService {
     private jwtService: Jwt,
     private config: ConfigService,
   ) {}
-  generateToken(payload: JwtTokenPayload, secret: string, expiresIn: string) {
-    return this.jwtService.sign(payload, {
-      secret: secret,
-      expiresIn: parseInt(expiresIn),
+  generateToken(
+    payload: JwtTokenPayload,
+    secret: string,
+    expiresIn: string,
+  ): string {
+    return this.jwtService.sign(payload as object, {
+      secret,
+      expiresIn: expiresIn as any,
     });
   }
+
   //verify token
   verifyToken(token: string, secret: string) {
+    const payload = this.jwtService.verify(token, {
+      secret: this.config.get<string>('JWT_ACCESS_SECRET') || secret,
+    });
+    console.log('payload', payload);
     try {
       const payload = this.jwtService.verify(token, {
-        secret: secret || this.config.get<string>('JWT_ACCESS_SECRET'),
+        secret: this.config.get<string>('JWT_ACCESS_SECRET') || secret,
       });
+      console.log('payload', payload);
       return payload;
     } catch (error: unknown) {
       const message = `Token verification failed: ${(error as JsonWebTokenError).message}`;

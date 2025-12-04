@@ -12,7 +12,7 @@ import {
   ForgotPasswordOtpVerifyResponse,
 } from './dto/forgotPassword.response';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
-import { LoginUserInput } from './dto/login.input.dto';
+import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
 import { LoginResponse } from './dto/login.response';
 @Resolver()
 export class AuthResolver {
@@ -54,5 +54,11 @@ export class AuthResolver {
   @Mutation(() => LoginResponse)
   async login(@Args('loginInput') loginUserInput: LoginUserInput) {
     return this.authService.login(loginUserInput);
+  }
+  @Mutation(() => LoginResponse)
+  async loginWithGoogle(
+    @Args('loginGoogleInput') loginGoogleInput: LoginGoogleInput,
+  ) {
+    return this.authService.loginWithGoogle(loginGoogleInput);
   }
 }

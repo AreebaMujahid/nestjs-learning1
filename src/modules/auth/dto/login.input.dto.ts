@@ -8,3 +8,9 @@ export class LoginUserInput {
   @Field()
   password: string;
 }
+
+@InputType()
+export class LoginGoogleInput {
+  @Field()
+  idToken: string;
+}

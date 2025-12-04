@@ -13,6 +13,7 @@ import { graphqlUploadExpress } from 'graphql-upload-ts';
 import { DatabaseWrapperModule } from './configs/database-config/database-wrapper.module';
 import { ConfigWrapperModule } from './configs/env-config/configuration-wrapper.module';
 import { ConfigModule } from '@nestjs/config';
+import { SharedModule } from './modules/shared/shared.module';
 const env = process.env.NODE_ENV || 'development';
 @Module({
   imports: [
@@ -35,6 +36,7 @@ const env = process.env.NODE_ENV || 'development';
     UserModule,
     CrewModule,
     AuthModule,
+    SharedModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthResolver],

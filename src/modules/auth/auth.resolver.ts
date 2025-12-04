@@ -74,7 +74,7 @@ export class AuthResolver {
   ) {
     return this.authService.refreshAccessToken(refreshAccessTokenInput);
   }
-  @Mutation()
+  @Mutation(() => Boolean)
   @UseGuards(AuthGuard)
   async changePassword(
     @Args('changePasswordInput') changePasswordInput: ChangePasswordInput,

@@ -67,7 +67,7 @@ export class AuthGuard implements CanActivate {
     } else {
       const ctx = GqlExecutionContext.create(context).getContext();
       const req = ctx.req;
-      const authHeader = req.headers.autherization;
+      const authHeader = req.headers.authorization;
       if (!authHeader) return undefined;
       const [type, token] = authHeader.split(' ');
       return type === 'Bearer' ? token : undefined;

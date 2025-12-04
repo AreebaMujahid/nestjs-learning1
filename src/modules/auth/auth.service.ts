@@ -225,14 +225,14 @@ export class AuthService {
   }
   async loginWithGoogle({ idToken }: LoginGoogleInput) {
     const verification = new OAuth2Client(
-      this.config.getOrThrow<string>('O_AUTH_CLIENT_ID'),
+      this.config.getOrThrow<string>('GOOGLE_AUTH_CLIENT_ID'),
     );
     const ticket = await verification.verifyIdToken({
       idToken,
-      audience: this.config.getOrThrow<string>('O_AUTH_CLIENT_ID'),
+      audience: this.config.getOrThrow<string>('GOOGLE_AUTH_CLIENT_ID'),
     });
     const payload = ticket.getPayload();
-    const { sub: googleID, email, name, profile } = payload as TokenPayload;
+    const { email, name, profile } = payload as TokenPayload;
     const user = await this.userRepository.findOne({
       where: { email: email },
     });

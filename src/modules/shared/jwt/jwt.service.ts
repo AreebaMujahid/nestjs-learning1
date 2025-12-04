@@ -21,17 +21,11 @@ export class JwtAuthService {
     });
   }
 
-  //verify token
   verifyToken(token: string, secret: string) {
-    const payload = this.jwtService.verify(token, {
-      secret: this.config.get<string>('JWT_ACCESS_SECRET') || secret,
-    });
-    console.log('payload', payload);
     try {
       const payload = this.jwtService.verify(token, {
-        secret: this.config.get<string>('JWT_ACCESS_SECRET') || secret,
+        secret: this.config.getOrThrow<string>('JWT_ACCESS_SECRET') || secret,
       });
-      console.log('payload', payload);
       return payload;
     } catch (error: unknown) {
       const message = `Token verification failed: ${(error as JsonWebTokenError).message}`;
@@ -41,8 +35,8 @@ export class JwtAuthService {
 
   getUserPayload(user: User, purpose: JwtTokenPurpose): JwtTokenPayload {
     //need to change issuer and audience later
-    const issuer = this.config.get<string>('JWT_ISSUER') || 'cruiserslink';
-    const audience = this.config.get<string>('JWT_AUDIENCE') || 'cruiserslink';
+    const issuer = this.config.getOrThrow<string>('JWT_ISSUER');
+    const audience = this.config.getOrThrow<string>('JWT_AUDIENCE');
     return {
       id: crypto.randomUUID(),
       userId: parseInt(user.id.toString(), 10),

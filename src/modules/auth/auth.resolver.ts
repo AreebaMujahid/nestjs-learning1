@@ -15,6 +15,11 @@ import {
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
 import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
 import { LoginResponse } from './dto/login.response';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from 'src/utilities/guards/auth.guard';
+import { CurrentUser } from 'src/utilities/decorators/user.decorator';
+import type { JwtTokenPayload } from 'src/utilities/types/token-payload';
+import { ChangePasswordInput } from './dto/change-password.input.dto';
 @Resolver()
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
@@ -68,5 +73,13 @@ export class AuthResolver {
     refreshAccessTokenInput: RefreshAccessTokenInput,
   ) {
     return this.authService.refreshAccessToken(refreshAccessTokenInput);
+  }
+  @Mutation()
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @Args('changePasswordInput') changePasswordInput: ChangePasswordInput,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    return this.authService.changePassword(changePasswordInput, user);
   }
 }

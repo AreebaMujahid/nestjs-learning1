@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -23,7 +24,8 @@ import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.inpu
 import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
 import { provider } from 'src/utilities/enums/provider';
 import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
-
+import { JwtTokenPayload } from 'src/utilities/types/token-payload';
+import { ChangePasswordInput } from './dto/change-password.input.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -267,5 +269,40 @@ export class AuthService {
     }
     const tokens = this.generateAuthTokens(user);
     return tokens;
+  }
+  async changePassword(
+    changePasswordInput: ChangePasswordInput,
+    user: JwtTokenPayload,
+  ) {
+    const dbUser = await this.userRepository.findOne({
+      where: { id: user.userId },
+    });
+    if (!dbUser) {
+      throw new BadRequestException('User does not exists');
+    }
+    if (dbUser.password) {
+      const isMatch = await bcrypt.compare(
+        dbUser.password,
+        changePasswordInput.currentPassword,
+      );
+      if (!isMatch) {
+        throw new ForbiddenException('Current password is incorrect');
+      }
+    }
+    if (
+      changePasswordInput.newPassword !== changePasswordInput.confirmNewPassword
+    ) {
+      throw new ForbiddenException('Passwords mismatch');
+    }
+    if (
+      changePasswordInput.currentPassword === changePasswordInput.newPassword
+    ) {
+      throw new ForbiddenException(
+        'New Password must be different from current password',
+      );
+    }
+    dbUser.password = await bcrypt.hash(changePasswordInput.newPassword, 10);
+    await this.userRepository.save(dbUser);
+    return true;
   }
 }

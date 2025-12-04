@@ -12,6 +12,8 @@ import {
   ForgotPasswordOtpVerifyResponse,
 } from './dto/forgotPassword.response';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
+import { LoginUserInput } from './dto/login.input.dto';
+import { LoginResponse } from './dto/login.response';
 @Resolver()
 export class AuthResolver {
   constructor(private readonly authService: AuthService) {}
@@ -48,5 +50,9 @@ export class AuthResolver {
     @Args('forgotPasswordInput') forgotPasswordInput: ForgotPasswordInput,
   ) {
     return this.authService.forgotPassword(forgotPasswordInput);
+  }
+  @Mutation(() => LoginResponse)
+  async login(@Args('loginInput') loginUserInput: LoginUserInput) {
+    return this.authService.login(loginUserInput);
   }
 }

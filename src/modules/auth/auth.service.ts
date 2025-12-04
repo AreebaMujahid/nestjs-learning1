@@ -19,6 +19,7 @@ import {
   ForgotPasswordOtpInput,
 } from './dto/forgotPassword.input.dto';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
+import { LoginUserInput } from './dto/login.input.dto';
 
 @Injectable()
 export class AuthService {
@@ -186,5 +187,33 @@ export class AuthService {
     user.password = await bcrypt.hash(forgotPasswordInput.newPassword, 10);
     const savedUser = await this.userRepository.save(user);
     return true;
+  }
+  async login(loginUserInput: LoginUserInput) {
+    const user = await this.userRepository.findOne({
+      where: { email: loginUserInput.email },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Email does not exists');
+    }
+    let passwordMatch;
+    if (user.password) {
+      passwordMatch = await bcrypt.compare(
+        loginUserInput.password,
+        user.password,
+      );
+    }
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    let tokens;
+    try {
+      tokens = this.generateAuthTokens(user);
+    } catch (error) {
+      console.error('JWT token generation error:', error);
+    }
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 }

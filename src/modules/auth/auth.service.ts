@@ -26,6 +26,7 @@ import { provider } from 'src/utilities/enums/provider';
 import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
 import { JwtTokenPayload } from 'src/utilities/types/token-payload';
 import { ChangePasswordInput } from './dto/change-password.input.dto';
+import { CompleteProfileInput } from './dto/complete-profile.input.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -305,4 +306,8 @@ export class AuthService {
     await this.userRepository.save(dbUser);
     return true;
   }
+  async completeProfile(
+    completeProfileInput: CompleteProfileInput,
+    user: JwtTokenPayload,
+  ) {}
 }

@@ -12,6 +12,7 @@ import {
   ForgotPasswordOtpResponse,
   ForgotPasswordOtpVerifyResponse,
 } from './dto/forgotPassword.response';
+import { CompleteProfileInput } from './dto/complete-profile.input.dto';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
 import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
 import { LoginResponse } from './dto/login.response';
@@ -81,5 +82,13 @@ export class AuthResolver {
     @CurrentUser() user: JwtTokenPayload,
   ) {
     return this.authService.changePassword(changePasswordInput, user);
+  }
+  @Mutation()
+  @UseGuards(AuthGuard)
+  async completeProfile(
+    @Args('completeProfileInput') completeProfileInput: CompleteProfileInput,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    this.authService.completeProfile(completeProfileInput, user);
   }
 }

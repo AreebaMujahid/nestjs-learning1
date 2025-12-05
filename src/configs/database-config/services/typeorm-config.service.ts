@@ -11,11 +11,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
   createTypeOrmOptions(): Promise<TypeOrmModuleOptions> | TypeOrmModuleOptions {
     return {
       type: 'postgres',
-      host: this.databaseConfig.host,
-      port: this.databaseConfig.port,
-      username: this.databaseConfig.username,
-      password: this.databaseConfig.password,
-      database: this.databaseConfig.name,
+      url: process.env.DATABASE_URL,
       synchronize: this.databaseConfig.sync,
       ssl: this.databaseConfig.ssl,
       entities: [User, Crew],

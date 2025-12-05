@@ -8,4 +8,5 @@ export const validationSchema = Joi.object({
   DB_PASSWORD: Joi.string().allow(''),
   DB_SYNC: Joi.boolean().truthy('true').falsy('false').required(),
   DB_SSL: Joi.boolean().truthy('true').falsy('false').required(),
+  DATABASE_URL: Joi.string().uri().required(),
 });

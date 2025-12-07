@@ -14,7 +14,6 @@ export class UserService {
     if (!dbUser) {
       throw new NotFoundException('User not found');
     }
-    console.log(dbUser);
     return dbUser;
   }
 }

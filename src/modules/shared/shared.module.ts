@@ -3,6 +3,7 @@ import { JwtAuthService } from './jwt/jwt.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
+import { SeederService } from './seeder/seeder.service';
 const services = [JwtAuthService];
 @Module({
   imports: [
@@ -19,7 +20,7 @@ const services = [JwtAuthService];
       }),
     }),
   ],
-  providers: [...services],
+  providers: [...services, SeederService],
   exports: [...services],
 })
 export class SharedModule {}

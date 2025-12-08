@@ -14,7 +14,7 @@ export class Category {
   @PrimaryGeneratedColumn(ID)
   id: number;
 
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column({ name: 'is_active' })

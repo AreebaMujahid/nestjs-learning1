@@ -19,6 +19,12 @@ export class User {
   @Field()
   isEmailVerified: boolean;
 
+  @Field({ nullable: true })
+  googleId?: string;
+
+  @Field({ nullable: true })
+  provider?: string;
+
   @Field()
   isActive: boolean;
 

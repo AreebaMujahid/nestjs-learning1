@@ -5,12 +5,14 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  Unique,
 } from 'typeorm';
-import { PrimaryGeneratedColumn } from 'typeorm/browser';
+import { PrimaryGeneratedColumn } from 'typeorm';
 import { ID } from '@nestjs/graphql';
 import { Category } from './category.entity';
 import { Listing } from './listing.entity';
 @Entity()
+@Unique(['name', 'category_id'])
 export class SubCategory {
   @PrimaryGeneratedColumn(ID)
   id: number;
@@ -29,6 +31,9 @@ export class SubCategory {
   })
   @JoinColumn({ name: 'category_id' })
   category: Category;
+
+  @Column()
+  category_id: number;
 
   @OneToMany(() => Listing, (listing) => listing.subCategory)
   listings: Listing[];

@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import { OtpPurpose } from 'src/utilities/enums/otp-purpose';
 import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
 import { OAuth2Client, TokenPayload } from 'google-auth-library';
+import { FileUpload } from 'graphql-upload-ts';
 import {
   ForgotPasswordInput,
   ForgotPasswordOtpInput,
@@ -26,12 +27,15 @@ import { provider } from 'src/utilities/enums/provider';
 import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
 import { JwtTokenPayload } from 'src/utilities/types/token-payload';
 import { ChangePasswordInput } from './dto/change-password.input.dto';
+import { CompleteProfileInput } from './dto/complete-profile.input.dto';
+import { UploadService } from '../shared/upload/upload.service';
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private jwtAuthService: JwtAuthService,
     private config: ConfigService,
+    private uploadService: UploadService,
   ) {}
 
   private generateAuthTokens(user: User) {
@@ -248,6 +252,7 @@ export class AuthService {
         provider: provider.GOOGLE,
         profilePicture: profile,
       });
+      console.log(newUser);
 
       const savedUser = await this.userRepository.save(newUser);
       tokens = this.generateAuthTokens(savedUser);
@@ -303,6 +308,48 @@ export class AuthService {
     }
     dbUser.password = await bcrypt.hash(changePasswordInput.newPassword, 10);
     await this.userRepository.save(dbUser);
+    return true;
+  }
+  async completeProfile(
+    input: CompleteProfileInput,
+    profilePicture: Promise<FileUpload> | null,
+    user: JwtTokenPayload,
+  ) {
+    let s3Url: string | undefined = undefined;
+    if (profilePicture) {
+      console.log('hyyyyyy');
+      const { createReadStream, filename } = await profilePicture;
+      const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
+        const chunks: Buffer[] = [];
+        createReadStream()
+          .on('data', (chunk) => chunks.push(chunk))
+          .on('end', () => resolve(Buffer.concat(chunks)))
+          .on('error', reject);
+      });
+      s3Url = await this.uploadService.upload(filename, fileBuffer);
+    }
+    const userEntity = await this.userRepository.findOne({
+      where: { id: user.userId },
+      relations: ['crew'],
+    });
+
+    if (!userEntity) throw new Error('User not found');
+    Object.assign(userEntity, {
+      boatName: input.boatName,
+      contactNumber: input.contactNumber,
+      ownerCaptain: input.ownerCaptain,
+      website: input.website,
+      country: input.country,
+      status: input.status,
+    });
+    if (s3Url) {
+      userEntity.profilePicture = s3Url;
+    }
+    if (input.crew?.length) {
+      userEntity.crew = input.crew as unknown as any[];
+    }
+    console.log('user entity', userEntity);
+    await this.userRepository.save(userEntity);
     return true;
   }
 }

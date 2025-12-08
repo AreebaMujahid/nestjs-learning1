@@ -29,7 +29,10 @@ export class SeederService {
 
   async seed() {
     // Categories
-    const categoriesToSeed = ListingCategories.map((name) => ({ name, isActive: true }));
+    const categoriesToSeed = ListingCategories.map((name) => ({
+      name,
+      isActive: true,
+    }));
     await this.categoryRepo.upsert(categoriesToSeed, ['name']);
     this.logger.log('Categories upserted successfully.');
 
@@ -50,8 +53,7 @@ export class SeederService {
     };
 
     const subcategoriesToSeed: Partial<SubCategory>[] = [];
-
-
+    //one other option : hash compare of categories , agr db maiy exist krta ha hash to no insert
     for (const [catName, subNames] of Object.entries(subcategoryMap)) {
       const category = categoryMap.get(catName);
       if (!category) continue;
@@ -59,16 +61,16 @@ export class SeederService {
       subNames.forEach((subName) => {
         subcategoriesToSeed.push({
           name: subName,
-          category_id: category.id, // Important: send the FK
+          category,
           isActive: true,
         });
       });
     }
 
-    await this.subcategoryRepo.upsert(
-      subcategoriesToSeed,
-      ['name', 'category_id'],
-    );
+    await this.subcategoryRepo.upsert(subcategoriesToSeed, [
+      'name',
+      'category',
+    ]);
 
     this.logger.log('Subcategories upserted successfully.');
     this.logger.log('Seeding complete!');

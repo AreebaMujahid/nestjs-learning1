@@ -66,7 +66,7 @@ export class User {
   @Column({ name: 'website_url', nullable: true })
   websiteUrl?: string;
 
-  @OneToMany(() => Crew, (crew) => crew.user)
+  @OneToMany(() => Crew, (crew) => crew.user, { cascade: true, eager: true })
   crew: Crew[];
 
   @Column({ name: 'country_name', nullable: true })

@@ -14,6 +14,7 @@ import { DatabaseWrapperModule } from './configs/database-config/database-wrappe
 import { ConfigWrapperModule } from './configs/env-config/configuration-wrapper.module';
 import { ConfigModule } from '@nestjs/config';
 import { SharedModule } from './modules/shared/shared.module';
+import { ListingModule } from './modules/listing/listing.module';
 const env = process.env.NODE_ENV || 'development';
 @Module({
   imports: [
@@ -28,6 +29,7 @@ const env = process.env.NODE_ENV || 'development';
       autoSchemaFile: true,
       introspection: true,
       playground: true,
+      //uploads: false,
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,
@@ -37,6 +39,7 @@ const env = process.env.NODE_ENV || 'development';
     CrewModule,
     AuthModule,
     SharedModule,
+    ListingModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthResolver],

@@ -14,13 +14,14 @@ export class UploadService {
       },
     });
   }
-  async upload(fileName: string, file: Buffer) {
+  async upload(fileName: string, file: Buffer): Promise<string> {
     await this.s3Client.send(
       new PutObjectCommand({
-        Bucket: 'cruiserslink-v2-profile',
+        Bucket: this.configService.getOrThrow('S3_BUCKET'),
         Key: fileName,
         Body: file,
       }),
     );
+    return `https://cruiserslink-v2-profile.s3.${this.configService.get('AWS_S3_REGION')}.amazonaws.com/${fileName}`;
   }
 }

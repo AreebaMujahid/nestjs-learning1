@@ -1,19 +1,17 @@
 import { InputType } from '@nestjs/graphql';
 import { Field } from '@nestjs/graphql';
+import { GraphQLUpload, FileUpload } from 'graphql-upload-ts';
 
 @InputType()
 export class CrewInput {
   @Field()
-  crewName: string;
+  name: string;
 
   @Field()
   designation: string;
 }
 @InputType()
 export class CompleteProfileInput {
-  @Field()
-  profilePhoto: string;
-
   @Field()
   boatName: string;
 

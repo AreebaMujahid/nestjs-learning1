@@ -93,7 +93,7 @@ export class AuthResolver {
   @UseGuards(AuthGuard)
   async completeProfile(
     @Args('completeProfileInput') completeProfileInput: CompleteProfileInput,
-    @Args({ name: 'profilePicture', type: () => GraphQLUpload, nullable: true })
+    @Args({ name: 'profilePicture', type: () => GraphQLUpload })
     profilePicture: Promise<FileUpload> | null,
     @CurrentUser() user: JwtTokenPayload,
   ) {

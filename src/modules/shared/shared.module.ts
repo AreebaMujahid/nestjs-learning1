@@ -3,8 +3,8 @@ import { JwtAuthService } from './jwt/jwt.service';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
-import { S3Service } from './s3/s3.service';
-const services = [JwtAuthService];
+import { UploadService } from './upload/upload.service';
+const services = [JwtAuthService, UploadService];
 @Module({
   imports: [
     ConfigModule, // ensures ConfigService is available
@@ -20,7 +20,7 @@ const services = [JwtAuthService];
       }),
     }),
   ],
-  providers: [...services, S3Service],
+  providers: [...services, UploadService],
   exports: [...services],
 })
 export class SharedModule {}

@@ -54,6 +54,7 @@ export class AuthService {
       refreshSecret,
       refreshExpiry,
     );
+    console.log(accessToken);
     return { accessToken, refreshToken };
   }
   private generateOtp() {

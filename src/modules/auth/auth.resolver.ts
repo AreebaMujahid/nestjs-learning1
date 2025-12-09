@@ -15,6 +15,7 @@ import {
   ForgotPasswordOtpResponse,
   ForgotPasswordOtpVerifyResponse,
 } from './dto/forgotPassword.response';
+import { CompleteProfileInput } from './dto/complete-profile.input.dto';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
 import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
 import { LoginResponse } from './dto/login.response';
@@ -93,7 +94,7 @@ export class AuthResolver {
   @UseGuards(AuthGuard)
   async completeProfile(
     @Args('completeProfileInput') completeProfileInput: CompleteProfileInput,
-    @Args({ name: 'profilePicture', type: () => GraphQLUpload, nullable: true })
+    @Args({ name: 'profilePicture', type: () => GraphQLUpload })
     profilePicture: Promise<FileUpload> | null,
     @CurrentUser() user: JwtTokenPayload,
   ) {

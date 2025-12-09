@@ -6,15 +6,19 @@ import { Injectable } from '@nestjs/common';
 import { Category } from 'src/modules/listing/entities/category.entity';
 import { SubCategory } from 'src/modules/listing/entities/subcategory.entity';
 import { Listing } from 'src/modules/listing/entities/listing.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
-  constructor(private readonly databaseConfig: DatabaseConfiguration) {}
+  constructor(
+    private readonly databaseConfig: DatabaseConfiguration,
+    private readonly configService: ConfigService,
+  ) {}
 
   createTypeOrmOptions(): Promise<TypeOrmModuleOptions> | TypeOrmModuleOptions {
     return {
       type: 'postgres',
-      url: process.env.DATABASE_URL,
+      url: this.configService.getOrThrow<string>('DATABASE_URL'),
       synchronize: this.databaseConfig.sync,
       ssl: this.databaseConfig.ssl,
       entities: [User, Crew, Category, SubCategory, Listing],

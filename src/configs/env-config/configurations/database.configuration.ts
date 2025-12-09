@@ -9,4 +9,7 @@ export class DatabaseConfiguration {
   get ssl(): boolean {
     return this.configService.getOrThrow<boolean>('DB_SSL');
   }
+  get url(): string {
+    return this.configService.getOrThrow<string>('DATABASE_URL');
+  }
 }

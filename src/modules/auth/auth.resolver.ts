@@ -4,6 +4,8 @@ import { SignUpInput } from './dto/signup.input.dto';
 import { SignUpResponse } from './dto/signup.response';
 import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
 import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
+import { FileUpload } from 'graphql-upload-ts';
+import { GraphQLUpload } from 'graphql-upload-ts';
 import {
   ForgotPasswordOtpInput,
   ForgotPasswordInput,
@@ -12,6 +14,7 @@ import {
   ForgotPasswordOtpResponse,
   ForgotPasswordOtpVerifyResponse,
 } from './dto/forgotPassword.response';
+import { CompleteProfileInput } from './dto/complete-profile.input.dto';
 import { ForgotPasswordOtpVerifyInput } from './dto/forgotPasswordOtpVerify.input.dto';
 import { LoginUserInput, LoginGoogleInput } from './dto/login.input.dto';
 import { LoginResponse } from './dto/login.response';
@@ -20,9 +23,13 @@ import { AuthGuard } from 'src/utilities/guards/auth.guard';
 import { CurrentUser } from 'src/utilities/decorators/user.decorator';
 import type { JwtTokenPayload } from 'src/utilities/types/token-payload';
 import { ChangePasswordInput } from './dto/change-password.input.dto';
+import { UploadService } from '../shared/upload/upload.service';
 @Resolver()
 export class AuthResolver {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly uploadService: UploadService,
+  ) {}
   @Query(() => String)
   healthCheck() {
     return 'Auth service is running';
@@ -81,5 +88,24 @@ export class AuthResolver {
     @CurrentUser() user: JwtTokenPayload,
   ) {
     return this.authService.changePassword(changePasswordInput, user);
+  }
+  @Mutation(() => Boolean)
+  @UseGuards(AuthGuard)
+  async completeProfile(
+    @Args('completeProfileInput') completeProfileInput: CompleteProfileInput,
+    @Args({ name: 'profilePicture', type: () => GraphQLUpload })
+    profilePicture: Promise<FileUpload> | null,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    try {
+      return await this.authService.completeProfile(
+        completeProfileInput,
+        profilePicture,
+        user,
+      );
+    } catch (error) {
+      console.error('CompleteProfile error:', error);
+      return false; // never return null
+    }
   }
 }

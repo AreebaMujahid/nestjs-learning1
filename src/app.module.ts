@@ -28,6 +28,7 @@ const env = process.env.NODE_ENV || 'development';
       autoSchemaFile: true,
       introspection: true,
       playground: true,
+      //uploads: false,
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,

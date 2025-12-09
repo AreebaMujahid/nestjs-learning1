@@ -9,8 +9,7 @@ import { Category } from '../listing/entities/category.entity';
 import { SubCategory } from '../listing/entities/subcategory.entity';
 import { UploadService } from './upload/upload.service';
 const services = [JwtAuthService, SeederService, UploadService];
-import { UploadService } from './upload/upload.service';
-const services = [JwtAuthService, UploadService];
+
 @Module({
   imports: [
     ConfigModule, // ensures ConfigService is available

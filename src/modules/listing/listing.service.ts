@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { ListingCategories } from 'src/utilities/constants/listing-categories';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
@@ -20,6 +20,9 @@ export class ListingService {
     const subCategory = this.subCategoryRepository.find({
       where: { category_id: Number(id) },
     });
+    if (!subCategory) {
+      throw new NotFoundException('Category not found');
+    }
     console.log(subCategory);
     return subCategory;
   }

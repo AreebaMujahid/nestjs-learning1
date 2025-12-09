@@ -6,7 +6,6 @@ import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
 import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
 import { FileUpload } from 'graphql-upload-ts';
 import { GraphQLUpload } from 'graphql-upload-ts';
-import { CompleteProfileInput } from './dto/complete-profile.input.dto';
 import {
   ForgotPasswordOtpInput,
   ForgotPasswordInput,

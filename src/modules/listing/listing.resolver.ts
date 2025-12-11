@@ -1,10 +1,16 @@
-import { Resolver } from '@nestjs/graphql';
 import { ListingService } from './listing.service';
-import { Query, Args } from '@nestjs/graphql';
+import { Query, Args, Mutation, Resolver } from '@nestjs/graphql';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { CategoryResponse } from './dto/category.response';
 import { SubCategoryResponse } from './dto/subcategory.response';
+import { CreateListinginput } from './dto/create-listing-input.dto';
+import { GraphQLUpload, FileUpload } from 'graphql-upload-ts';
+import { AuthGuard } from 'src/utilities/guards/auth.guard';
+import { UseGuards } from '@nestjs/common';
+import { CurrentUser } from 'src/utilities/decorators/user.decorator';
+import type { JwtTokenPayload } from 'src/utilities/types/token-payload';
+import { ListingResponse } from './dto/listing-response.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -18,5 +24,29 @@ export class ListingResolver {
   @Query(() => [SubCategoryResponse])
   async getSubCategory(@Args('id') id: string) {
     return this.listingService.getSubCategories(id);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(AuthGuard)
+  async createListing(
+    @Args('createListingInput') createListinginput: CreateListinginput,
+    @Args({ name: 'listingImage', type: () => GraphQLUpload, nullable: true })
+    listingImage: Promise<FileUpload> | null,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    return this.listingService.createListing(
+      createListinginput,
+      listingImage,
+      user,
+    );
+  }
+
+  @Query(() => [ListingResponse])
+  @UseGuards(AuthGuard)
+  async fetchAllListing(
+    @CurrentUser()
+    user: JwtTokenPayload,
+  ) {
+    return this.listingService.fetchAllistings(user);
   }
 }

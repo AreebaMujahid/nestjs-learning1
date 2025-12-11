@@ -6,6 +6,9 @@ import { Index } from 'typeorm';
 import { CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { SubCategory } from './subcategory.entity';
 import { Category } from './category.entity';
+import { Package } from './package.entity';
+import { ServiceType } from 'src/utilities/enums/service-type';
+import { User } from 'src/modules/user/entity/user.entity';
 
 @Entity()
 export class Listing {
@@ -15,8 +18,8 @@ export class Listing {
   @Column()
   image: string;
 
-  @Column({ name: 'service_type' })
-  serviceType: string;
+  @Column({ name: 'service_type', type: 'enum', enum: ServiceType })
+  serviceType: ServiceType;
 
   @Column({ name: 'commercial_price', nullable: true })
   commercialPrice?: number;
@@ -27,11 +30,14 @@ export class Listing {
   @Column()
   description: string;
 
-  @Column()
-  packageType: string;
-
   @Column({ type: 'timestamp' })
   packageCreatedAt: Date;
+
+  @Column({ name: 'start_time', type: 'timestamptz' })
+  startTime: Date;
+
+  @Column({ name: 'end_time', type: 'timestamptz' })
+  endTime: Date;
 
   @Column()
   contactNo: string;
@@ -78,4 +84,14 @@ export class Listing {
   })
   @JoinColumn({ name: 'sub_category' })
   subCategory: SubCategory;
+
+  @ManyToOne(() => Package, (pkg) => pkg.listings, {
+    onDelete: 'SET NULL',
+    nullable: true,
+  })
+  package?: Package;
+
+  @ManyToOne(() => User, (user) => user.listings, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'owner_id' })
+  owner: User;
 }

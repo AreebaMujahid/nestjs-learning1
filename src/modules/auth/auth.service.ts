@@ -318,7 +318,6 @@ export class AuthService {
   ) {
     let s3Url: string | undefined = undefined;
     if (profilePicture) {
-      console.log('hyyyyyy');
       const { createReadStream, filename } = await profilePicture;
       const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
         const chunks: Buffer[] = [];

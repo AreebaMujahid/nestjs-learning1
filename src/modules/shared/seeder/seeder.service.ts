@@ -16,6 +16,7 @@ import { Repository } from 'typeorm';
 import { Listing } from 'src/modules/listing/entities/listing.entity';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Package } from 'src/modules/listing/entities/package.entity';
 @Injectable()
 export class SeederService {
   private readonly logger = new Logger(SeederService.name);
@@ -25,6 +26,8 @@ export class SeederService {
     private readonly categoryRepo: Repository<Category>,
     @InjectRepository(SubCategory)
     private readonly subcategoryRepo: Repository<SubCategory>,
+    @InjectRepository(Package)
+    private readonly packageRepo: Repository<Package>,
   ) {}
 
   async seed() {
@@ -73,6 +76,18 @@ export class SeederService {
     ]);
 
     this.logger.log('Subcategories upserted successfully.');
+    const packagesToSeed = [
+      'Basic',
+      'Bronze',
+      'Silver',
+      'Gold',
+      'Platinum',
+    ].map((name) => ({
+      name,
+    }));
+
+    await this.packageRepo.upsert(packagesToSeed, ['name']);
+    this.logger.log('Packages upserted successfully');
     this.logger.log('Seeding complete!');
   }
 }

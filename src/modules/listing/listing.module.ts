@@ -4,9 +4,25 @@ import { ListingResolver } from './listing.resolver';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Category } from './entities/category.entity';
 import { SubCategory } from './entities/subcategory.entity';
+import { Package } from './entities/package.entity';
+import { SharedModule } from '../shared/shared.module';
+import { ConfigModule } from '@nestjs/config';
+import { User } from '../user/entity/user.entity';
+import { Listing } from './entities/listing.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Category, SubCategory])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Category,
+      SubCategory,
+      Package,
+      User,
+      Listing,
+      Package,
+    ]),
+    SharedModule,
+    ConfigModule,
+  ],
   providers: [ListingService, ListingResolver],
 })
 export class ListingModule {}

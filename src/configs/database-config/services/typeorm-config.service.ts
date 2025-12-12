@@ -8,6 +8,7 @@ import { SubCategory } from 'src/modules/listing/entities/subcategory.entity';
 import { Listing } from 'src/modules/listing/entities/listing.entity';
 import { ConfigService } from '@nestjs/config';
 import { Package } from 'src/modules/listing/entities/package.entity';
+import { FeaturePayment } from 'src/modules/listing/entities/feature-payment.entity';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -22,7 +23,15 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       url: this.configService.getOrThrow<string>('DATABASE_URL'),
       synchronize: this.databaseConfig.sync,
       ssl: this.databaseConfig.ssl,
-      entities: [User, Crew, Category, SubCategory, Listing, Package],
+      entities: [
+        User,
+        Crew,
+        Category,
+        SubCategory,
+        Listing,
+        Package,
+        FeaturePayment,
+      ],
       //logging: true,
       migrations: [],
       extra: {},

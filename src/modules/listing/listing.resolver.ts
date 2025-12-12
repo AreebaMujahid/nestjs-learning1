@@ -24,7 +24,7 @@ export class ListingResolver {
     return this.listingService.getSubCategories(id);
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => String)
   @UseGuards(AuthGuard)
   async createListing(
     @Args('createListingInput') createListinginput: CreateListinginput,

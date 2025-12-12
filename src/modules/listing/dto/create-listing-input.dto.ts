@@ -49,6 +49,9 @@ export class CreateListinginput {
   @Field(() => LocationCoordinateInput)
   locationCoordinates: LocationCoordinateInput;
 
-  @Field()
-  packageType: string;
+  @Field({ nullable: true })
+  packageType?: string;
+
+  @Field({ nullable: true })
+  priceId?: string;
 }

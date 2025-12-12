@@ -15,6 +15,7 @@ import { Listing } from './entities/listing.entity';
 import { ServiceType } from 'src/utilities/enums/service-type';
 import { Package } from './entities/package.entity';
 import { UploadService } from '../shared/upload/upload.service';
+import { StripeService } from '../stripe/stripe.service';
 
 @Injectable()
 export class ListingService {
@@ -30,6 +31,7 @@ export class ListingService {
     @InjectRepository(Package)
     private readonly packageRepository: Repository<Package>,
     private uploadService: UploadService,
+    private stripeService: StripeService,
   ) {}
   getListingCategories() {
     return this.categoryRepository.find();
@@ -119,34 +121,42 @@ export class ListingService {
       });
       s3Url = await this.uploadService.upload(filename, fileBuffer);
     }
-    const listing = this.listingRepository.create({
-      serviceType: input.serviceType,
-      commercialPrice: input.commercialPrice,
-      category: category,
-      subCategory: subCategory,
-      name: input.name,
-      description: input.description,
-      startTime: input.startTime,
-      endTime: input.endTime,
-      contactNo: input.contactNo,
-      country: input.country,
-      address: input.address,
-      packageCreatedAt: new Date(),
-      //if package type exists in param , then store , else store undefined
-      package: input.packageType ? packageType : undefined,
-      //owner: ExistingUser,
-      locationCoordinates: {
-        type: 'Point',
-        coordinates: [
-          input.locationCoordinates.lng,
-          input.locationCoordinates.lat,
-        ],
-      },
-      image: s3Url,
-      owner: ExistingUser,
-    });
-    const savedListing = await this.listingRepository.save(listing);
-    return true;
+    if (packageType) {
+      const listing = this.listingRepository.create({
+        serviceType: input.serviceType,
+        commercialPrice: input.commercialPrice,
+        category: category,
+        subCategory: subCategory,
+        name: input.name,
+        description: input.description,
+        startTime: input.startTime,
+        endTime: input.endTime,
+        contactNo: input.contactNo,
+        country: input.country,
+        address: input.address,
+        packageCreatedAt: new Date(),
+        //if package type exists in param , then store , else store undefined
+        package: input.packageType ? packageType : undefined,
+        //owner: ExistingUser,
+        locationCoordinates: {
+          type: 'Point',
+          coordinates: [
+            input.locationCoordinates.lng,
+            input.locationCoordinates.lat,
+          ],
+        },
+        image: s3Url,
+        owner: ExistingUser,
+      });
+      const savedListing = await this.listingRepository.save(listing);
+      return true;
+    } else {
+      const priceId = '1';
+      const session = await this.stripeService.createCheckoutSession(priceId, {
+        listingData: input,
+      });
+      return { session };
+    }
   }
   async fetchAllistings(user: JwtTokenPayload) {
     const list = await this.listingRepository.find({

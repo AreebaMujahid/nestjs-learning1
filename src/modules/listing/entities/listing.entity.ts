@@ -1,4 +1,10 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { ID } from '@nestjs/graphql';
 import { Column } from 'typeorm';
 import type { GeoPoint } from 'src/utilities/types/geojson.type';
@@ -9,7 +15,7 @@ import { Category } from './category.entity';
 import { Package } from './package.entity';
 import { ServiceType } from 'src/utilities/enums/service-type';
 import { User } from 'src/modules/user/entity/user.entity';
-
+import { FeaturePayment } from './feature-payment.entity';
 @Entity()
 export class Listing {
   @PrimaryGeneratedColumn(ID)
@@ -94,4 +100,7 @@ export class Listing {
   @ManyToOne(() => User, (user) => user.listings, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'owner_id' })
   owner: User;
+
+  @OneToMany(() => FeaturePayment, (payment) => payment.listing)
+  payments: FeaturePayment[];
 }

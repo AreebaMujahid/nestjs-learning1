@@ -15,6 +15,7 @@ import { ConfigWrapperModule } from './configs/env-config/configuration-wrapper.
 import { ConfigModule } from '@nestjs/config';
 import { SharedModule } from './modules/shared/shared.module';
 import { ListingModule } from './modules/listing/listing.module';
+import { StripeModule } from './modules/stripe/stripe.module';
 const env = process.env.NODE_ENV || 'development';
 @Module({
   imports: [
@@ -40,6 +41,7 @@ const env = process.env.NODE_ENV || 'development';
     AuthModule,
     SharedModule,
     ListingModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthResolver],

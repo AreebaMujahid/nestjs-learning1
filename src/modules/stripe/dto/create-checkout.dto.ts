@@ -1,7 +1,6 @@
-import { InputType } from '@nestjs/graphql';
-
+import { InputType, Field } from '@nestjs/graphql';
 @InputType()
 export class CreateCheckoutDto {
-    @Field()
-    priceId: 
+  @Field()
+  priceId: string;
 }

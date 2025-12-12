@@ -1,5 +1,4 @@
-import { ObjectType, Field, ID } from '@nestjs/graphql';
-import { GeoPoint } from 'src/utilities/types/geojson.type';
+import { ObjectType, Field } from '@nestjs/graphql';
 @ObjectType()
 export class ListingResponse {
   @Field()

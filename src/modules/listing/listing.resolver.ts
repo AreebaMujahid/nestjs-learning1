@@ -1,7 +1,5 @@
 import { ListingService } from './listing.service';
 import { Query, Args, Mutation, Resolver } from '@nestjs/graphql';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from './entities/category.entity';
 import { CategoryResponse } from './dto/category.response';
 import { SubCategoryResponse } from './dto/subcategory.response';
 import { CreateListinginput } from './dto/create-listing-input.dto';

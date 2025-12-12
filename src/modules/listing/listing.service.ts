@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ListingCategories } from 'src/utilities/constants/listing-categories';
 import { Repository } from 'typeorm';
 import { Category } from './entities/category.entity';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -35,8 +34,8 @@ export class ListingService {
   getListingCategories() {
     return this.categoryRepository.find();
   }
-  getSubCategories(id: string) {
-    const subCategory = this.subCategoryRepository.find({
+  async getSubCategories(id: string) {
+    const subCategory = await this.subCategoryRepository.find({
       where: { category_id: Number(id) },
     });
     if (!subCategory) {

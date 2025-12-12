@@ -1,5 +1,4 @@
 import { InputType, Field } from '@nestjs/graphql';
-import type { GeoPoint } from 'src/utilities/types/geojson.type';
 import { Float } from '@nestjs/graphql';
 import { ServiceType } from 'src/utilities/enums/service-type';
 

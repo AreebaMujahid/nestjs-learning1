@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { ServiceType } from 'src/utilities/enums/service-type';
 import { Package } from './entities/package.entity';
 import { UploadService } from '../shared/upload/upload.service';
 import { StripeService } from '../stripe/stripe.service';
+import { FeaturePayment } from './entities/feature-payment.entity';
 
 @Injectable()
 export class ListingService {
@@ -30,6 +32,8 @@ export class ListingService {
     private readonly listingRepository: Repository<Listing>,
     @InjectRepository(Package)
     private readonly packageRepository: Repository<Package>,
+    @InjectRepository(FeaturePayment)
+    private readonly featurePaymentRepository: Repository<FeaturePayment>,
     private uploadService: UploadService,
     private stripeService: StripeService,
   ) {}
@@ -168,5 +172,38 @@ export class ListingService {
       relations: ['owner', 'category', 'subCategory', 'package'],
     });
     return list;
+  }
+  async deleteListing(user: JwtTokenPayload, listingId: string) {
+    const listing = await this.listingRepository.findOne({
+      where: { id: Number(listingId) },
+      relations: ['owner'],
+    });
+    if (!listing) {
+      throw new NotFoundException('listing not found');
+    }
+    if (listing.isArchived) {
+      throw new BadRequestException('listing is already archived');
+    }
+    const isOwner = listing.owner?.id === user.userId;
+    if (isOwner) {
+      throw new ForbiddenException(
+        'You are not allowed to archive this listing',
+      );
+    }
+    const activePayments = await this.featurePaymentRepository.find({
+      where: {
+        listing: { id: Number(listingId) },
+      },
+    });
+    if (activePayments.length > 0) {
+      throw new BadRequestException(
+        'Listing has active feature payment and cannot be archived',
+      );
+    }
+    listing.isArchived = true;
+    listing.isActive = false;
+
+    await this.listingRepository.save(listing);
+    return true;
   }
 }

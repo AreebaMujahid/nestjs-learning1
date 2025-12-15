@@ -47,4 +47,13 @@ export class ListingResolver {
   ) {
     return this.listingService.fetchAllistings(user);
   }
+
+  @Mutation(() => Boolean)
+  @UseGuards(AuthGuard)
+  async deleteListing(
+    @CurrentUser() user: JwtTokenPayload,
+    @Args('id') id: string,
+  ) {
+    return this.deleteListing(user, id);
+  }
 }

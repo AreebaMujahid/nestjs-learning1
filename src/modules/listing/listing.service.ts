@@ -20,8 +20,10 @@ import { StripeService } from '../stripe/stripe.service';
 import { FeaturePayment } from './entities/feature-payment.entity';
 import { UpdateListingInput } from './dto/update-listing-input.dto';
 import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
-
+import { GeoPoint } from 'src/utilities/types/geojson.type';
 import * as countries from 'i18n-iso-countries';
+import { ListingImage } from './entities/listing-images.entity';
+import { EditListingInput } from './dto/edit-listing-input.dto';
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 @Injectable()
@@ -39,6 +41,8 @@ export class ListingService {
     private readonly packageRepository: Repository<Package>,
     @InjectRepository(FeaturePayment)
     private readonly featurePaymentRepository: Repository<FeaturePayment>,
+    @InjectRepository(ListingImage)
+    private readonly listingImageRepository: Repository<ListingImage>,
     private uploadService: UploadService,
     private stripeService: StripeService,
   ) {}
@@ -66,7 +70,7 @@ export class ListingService {
   //8- simple string input validations
   async createListing(
     input: CreateListinginput,
-    image: Promise<FileUpload> | null,
+    images: Promise<FileUpload>[] | null,
     user: JwtTokenPayload,
   ) {
     const ExistingUser = await this.userRepository.findOne({
@@ -118,18 +122,25 @@ export class ListingService {
       throw new BadRequestException('Package does not exists');
     }
 
-    let s3Url: string | undefined = undefined;
-    if (image) {
-      const { createReadStream, filename } = await image;
-      const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        createReadStream()
-          .on('data', (chunk) => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)))
-          .on('error', reject);
-      });
-      s3Url = await this.uploadService.upload(filename, fileBuffer);
+    let listingImages: ListingImage[] = [];
+
+    if (images && images.length > 0) {
+      for (const imagePromise of images) {
+        const { createReadStream, filename } = await imagePromise;
+        const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
+          const chunks: Buffer[] = [];
+          createReadStream()
+            .on('data', (chunk) => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+
+        const s3Url = await this.uploadService.upload(filename, fileBuffer);
+        const listingImage = this.listingImageRepository.create({ url: s3Url });
+        listingImages.push(listingImage);
+      }
     }
+
     if (packageType) {
       const listing = this.listingRepository.create({
         serviceType: input.serviceType,
@@ -154,7 +165,7 @@ export class ListingService {
             input.locationCoordinates.lat,
           ],
         },
-        image: s3Url,
+        images: listingImages,
         owner: ExistingUser,
       });
       const savedListing = await this.listingRepository.save(listing);
@@ -175,9 +186,15 @@ export class ListingService {
         owner: { id: user.userId },
         isActive: input.isActive,
       },
-      relations: ['owner', 'category', 'subCategory', 'package'],
+      relations: ['owner', 'category', 'subCategory', 'package', 'images'],
     });
-    return list;
+    return list.map((listing) => ({
+      ...listing,
+      images: listing.images.map((img) => ({
+        id: img.id,
+        url: img.url,
+      })),
+    }));
   }
   async deleteListing(user: JwtTokenPayload, listingId: string) {
     const listing = await this.listingRepository.findOne({
@@ -252,5 +269,141 @@ export class ListingService {
       code,
       name,
     }));
+  }
+  //HELPER FUNCTION
+  async updateListingImages(
+    listing: Listing,
+    inputImages: { id?: number; url?: string }[],
+    newFileUploads?: Promise<FileUpload>[],
+  ) {
+    const existingImages = listing.images ?? [];
+    const inputImageIds = inputImages
+      .filter((i) => i.id)
+      .map((i) => Number(i.id));
+    // Remove images not present
+    const imagesToRemove = existingImages.filter(
+      (img) => !inputImageIds.includes(img.id),
+    );
+    if (imagesToRemove.length)
+      await this.listingImageRepository.remove(imagesToRemove);
+    const newImagesFromInput = inputImages
+      .filter((img) => !img.id && img.url)
+      .map((img) =>
+        this.listingImageRepository.create({ url: img.url!, listing }),
+      );
+    if (newImagesFromInput.length)
+      await this.listingImageRepository.save(newImagesFromInput);
+
+    // Add new uploaded files
+    if (newFileUploads && newFileUploads.length) {
+      for (const filePromise of newFileUploads) {
+        const { createReadStream, filename } = await filePromise;
+        const buffer = await new Promise<Buffer>((resolve, reject) => {
+          const chunks: Buffer[] = [];
+          createReadStream()
+            .on('data', (chunk) => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+        const url = await this.uploadService.upload(filename, buffer);
+        const newFileImage = this.listingImageRepository.create({
+          url,
+          listing,
+        });
+        const newImagesAddedObject =
+          await this.listingImageRepository.save(newFileImage);
+      }
+    }
+    return this.listingImageRepository.find({
+      where: { listing: { id: listing.id } },
+    });
+  }
+
+  async editListing(
+    input: EditListingInput,
+    user: JwtTokenPayload,
+    newImages?: Promise<FileUpload>[],
+  ) {
+    // Fetch the existing listing
+    const listing = await this.listingRepository.findOne({
+      where: { id: input.id, owner: { id: user.userId } },
+      relations: ['images', 'category', 'subCategory', 'package'],
+    });
+
+    if (!listing) {
+      throw new Error('Listing not found or you are not the owner.');
+    }
+
+    // Update primitive fields if provided
+    if (input.name) listing.name = input.name;
+    if (input.description) listing.description = input.description;
+    if (input.serviceType) listing.serviceType = input.serviceType;
+    if (input.commercialPrice !== undefined)
+      listing.commercialPrice = input.commercialPrice;
+    if (input.contactNo) listing.contactNo = input.contactNo;
+    if (input.country) listing.country = input.country;
+    if (input.address) listing.address = input.address;
+    if (input.startTime) listing.startTime = new Date(input.startTime);
+    if (input.endTime) listing.endTime = new Date(input.endTime);
+    if (input.locationCoordinates)
+      listing.locationCoordinates = {
+        type: 'Point',
+        coordinates: [
+          input.locationCoordinates.lng,
+          input.locationCoordinates.lat,
+        ],
+      } as GeoPoint;
+
+    // Update relations
+    if (input.categoryId) {
+      const category = await this.categoryRepository.findOne({
+        where: { id: Number(input.categoryId) },
+      });
+      if (!category) {
+        throw new Error('Category not found');
+      }
+      listing.category = category;
+    }
+
+    if (input.subcategoryId) {
+      const subCategory = await this.subCategoryRepository.findOne({
+        where: { id: Number(input.subcategoryId) },
+      });
+      if (!subCategory) {
+        throw new Error('Sub category not found');
+      }
+      listing.subCategory = subCategory;
+    }
+
+    if (input.packageType) {
+      const packageType = await this.packageRepository.findOne({
+        where: { id: Number(input.packageType) },
+      });
+      if (!packageType) {
+        throw new Error('package not found');
+      }
+      listing.package = packageType;
+    }
+    if (input.existingImages || newImages?.length) {
+      const updatedImages = await this.updateListingImages(
+        listing,
+        input.existingImages || [],
+        newImages,
+      );
+      listing.images = updatedImages;
+    }
+    const savedOne = await this.listingRepository.save(listing);
+    return savedOne;
+  }
+  // src/modules/listing/listing.service.ts
+  async getListingById(id: number) {
+    const listing = await this.listingRepository.findOne({
+      where: { id },
+      relations: ['images', 'category', 'subCategory', 'package'],
+    });
+
+    if (!listing) throw new Error('Listing not found');
+
+    return listing;
   }
 }

@@ -11,6 +11,7 @@ import { User } from '../user/entity/user.entity';
 import { Listing } from './entities/listing.entity';
 import { StripeService } from '../stripe/stripe.service';
 import { FeaturePayment } from './entities/feature-payment.entity';
+import { ListingImage } from './entities/listing-images.entity';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { FeaturePayment } from './entities/feature-payment.entity';
       Listing,
       Package,
       FeaturePayment,
+      ListingImage,
     ]),
     SharedModule,
     ConfigModule,

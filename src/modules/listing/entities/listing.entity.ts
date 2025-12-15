@@ -16,13 +16,11 @@ import { Package } from './package.entity';
 import { ServiceType } from 'src/utilities/enums/service-type';
 import { User } from 'src/modules/user/entity/user.entity';
 import { FeaturePayment } from './feature-payment.entity';
+import { ListingImage } from './listing-images.entity';
 @Entity()
 export class Listing {
   @PrimaryGeneratedColumn(ID)
   id: number;
-
-  @Column()
-  image: string;
 
   @Column({ name: 'service_type', type: 'enum', enum: ServiceType })
   serviceType: ServiceType;
@@ -103,4 +101,7 @@ export class Listing {
 
   @OneToMany(() => FeaturePayment, (payment) => payment.listing)
   payments: FeaturePayment[];
+
+  @OneToMany(() => ListingImage, (image) => image.listing, { cascade: true })
+  images: ListingImage[];
 }

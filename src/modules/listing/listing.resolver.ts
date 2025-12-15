@@ -1,5 +1,5 @@
 import { ListingService } from './listing.service';
-import { Query, Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Query, Args, Mutation, Resolver, Int } from '@nestjs/graphql';
 import { CategoryResponse } from './dto/category.response';
 import { SubCategoryResponse } from './dto/subcategory.response';
 import { CreateListinginput } from './dto/create-listing-input.dto';
@@ -13,6 +13,7 @@ import { UpdateListingInput } from './dto/update-listing-input.dto';
 import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
 import { PackageDTO } from './dto/package.dto';
 import { CountryDto } from './dto/country.dto';
+import { EditListingInput } from './dto/edit-listing-input.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -32,13 +33,17 @@ export class ListingResolver {
   @UseGuards(AuthGuard)
   async createListing(
     @Args('createListingInput') createListinginput: CreateListinginput,
-    @Args({ name: 'listingImage', type: () => GraphQLUpload, nullable: true })
-    listingImage: Promise<FileUpload> | null,
+    @Args({
+      name: 'listingImages',
+      type: () => [GraphQLUpload],
+      nullable: true,
+    })
+    listingImages: Promise<FileUpload>[] | null,
     @CurrentUser() user: JwtTokenPayload,
   ) {
     return this.listingService.createListing(
       createListinginput,
-      listingImage,
+      listingImages,
       user,
     );
   }
@@ -72,7 +77,7 @@ export class ListingResolver {
   }
 
   @Query(() => [PackageDTO])
-  //@UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   async fetchAllPackages() {
     return this.listingService.fetchAllPackages();
   }
@@ -81,5 +86,23 @@ export class ListingResolver {
   @UseGuards(AuthGuard)
   async getAllCountries() {
     return this.listingService.getAllCountries();
+  }
+
+  @Mutation(() => ListingResponse)
+  @UseGuards(AuthGuard)
+  async editListing(
+    @Args('editListingInput') editListingInput: EditListingInput,
+    @Args({ name: 'newImages', type: () => [GraphQLUpload], nullable: true })
+    newImages: Promise<FileUpload>[],
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    console.log('new images', newImages);
+    return this.listingService.editListing(editListingInput, user, newImages);
+  }
+
+  //fetch listing by id ka end point , then test edit ka flow
+  @Query(() => ListingResponse)
+  async getListingById(@Args('id', { type: () => Int }) id: number) {
+    return this.listingService.getListingById(id);
   }
 }

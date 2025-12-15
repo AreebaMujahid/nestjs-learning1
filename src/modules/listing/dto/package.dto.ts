@@ -12,6 +12,9 @@ export class PackageDTO {
   stripePriceId?: string;
 
   @Field()
+  price: number;
+
+  @Field()
   createdAt: Date;
 
   @Field()

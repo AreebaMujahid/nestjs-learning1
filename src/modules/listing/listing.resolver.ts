@@ -12,6 +12,7 @@ import { ListingResponse } from './dto/listing-response.dto';
 import { UpdateListingInput } from './dto/update-listing-input.dto';
 import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
 import { PackageDTO } from './dto/package.dto';
+import { CountryDto } from './dto/country.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -71,8 +72,14 @@ export class ListingResolver {
   }
 
   @Query(() => [PackageDTO])
-  @UseGuards(AuthGuard)
+  //@UseGuards(AuthGuard)
   async fetchAllPackages() {
     return this.listingService.fetchAllPackages();
+  }
+
+  @Query(() => [CountryDto])
+  @UseGuards(AuthGuard)
+  async getAllCountries() {
+    return this.listingService.getAllCountries();
   }
 }

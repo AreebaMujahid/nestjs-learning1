@@ -20,6 +20,9 @@ export class Package {
   @Column({ name: 'stripe_price_id', unique: true, nullable: true })
   stripePriceId: string;
 
+  @Column({ type: 'float', nullable: true })
+  price: number;
+
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',

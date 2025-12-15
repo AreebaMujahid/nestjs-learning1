@@ -90,19 +90,31 @@ export class SeederService {
     this.logger.log('Packages upserted successfully');
     this.logger.log('Seeding complete!');
 
-    const packagePriceMap: Record<string, string> = {
-      Basic: 'price_1Sd9u1JtxSixdKjhKMitt9wZ',
-      Bronze: 'price_1Sd9ueJtxSixdKjhUsKA7iMJ',
-      Silver: 'price_1Sd9vBJtxSixdKjha5y5QJOt',
-      Gold: 'price_1Sd9x2JtxSixdKjhlehj1qbt',
-      Platinum: 'price_1Sd9xNJtxSixdKjhKuJ20arT',
+    const packagePriceMap: Record<
+      string,
+      { stripePriceId: string; price: number }
+    > = {
+      Basic: { stripePriceId: 'price_1Sd9u1JtxSixdKjhKMitt9wZ', price: 365.0 },
+      Bronze: { stripePriceId: 'price_1Sd9ueJtxSixdKjhUsKA7iMJ', price: 547.0 },
+      Silver: { stripePriceId: 'price_1Sd9vBJtxSixdKjha5y5QJOt', price: 730.0 },
+      Gold: { stripePriceId: 'price_1Sd9x2JtxSixdKjhlehj1qbt', price: 912.0 },
+      Platinum: {
+        stripePriceId: 'price_1Sd9xNJtxSixdKjhKuJ20arT',
+        price: 1095.0,
+      },
     };
 
-    const packagesIdsToSeed = Object.entries(packagePriceMap).map(
-      ([name, stripePriceId]) => ({ name, stripePriceId }),
+    const packagesToSeedWithPrices = Object.entries(packagePriceMap).map(
+      ([name, { stripePriceId, price }]) => ({
+        name,
+        stripePriceId,
+        price,
+      }),
     );
 
-    await this.packageRepo.upsert(packagesIdsToSeed, ['name']);
-    this.logger.log('Packages upserted successfully with priceIds');
+    await this.packageRepo.upsert(packagesToSeedWithPrices, ['name']);
+    this.logger.log(
+      'Packages upserted successfully with stripePriceId and price',
+    );
   }
 }

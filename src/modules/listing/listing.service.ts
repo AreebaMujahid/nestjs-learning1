@@ -21,6 +21,9 @@ import { FeaturePayment } from './entities/feature-payment.entity';
 import { UpdateListingInput } from './dto/update-listing-input.dto';
 import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
 
+import * as countries from 'i18n-iso-countries';
+countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
+
 @Injectable()
 export class ListingService {
   constructor(
@@ -239,5 +242,15 @@ export class ListingService {
       order: { id: 'ASC' },
     });
     return packages;
+  }
+  async getAllCountries() {
+    const countryObj = countries.getNames('en', {
+      select: 'official',
+    });
+
+    return [...Object.entries(countryObj)].map(([code, name]) => ({
+      code,
+      name,
+    }));
   }
 }

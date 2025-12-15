@@ -151,10 +151,12 @@ export class ListingService {
       const savedListing = await this.listingRepository.save(listing);
       return true;
     } else {
-      const priceId = '1';
-      const session = await this.stripeService.createCheckoutSession(priceId, {
-        listingData: input,
-      });
+      const session = await this.stripeService.createCheckoutSession(
+        input.priceId,
+        {
+          listingData: input,
+        },
+      );
       return { session };
     }
   }

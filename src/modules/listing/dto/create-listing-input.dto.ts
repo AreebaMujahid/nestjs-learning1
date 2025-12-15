@@ -52,6 +52,6 @@ export class CreateListinginput {
   @Field({ nullable: true })
   packageType?: string;
 
-  @Field({ nullable: true })
-  priceId?: string;
+  @Field()
+  priceId: string;
 }

@@ -34,8 +34,6 @@ export class WebhookController {
       case 'checkout.session.completed':
         const session = event.data.object as any;
         const metadata = session.metadata;
-
-        console.log('Payment Success:', session);
         //Update database, save payment details
         const listing = this.listingRepository.create({
           name: metadata.name,
@@ -45,7 +43,7 @@ export class WebhookController {
         });
         await this.listingRepository.save(listing);
 
-        // 2️⃣ Save feature payment
+        // Save feature payment
         const payment = this.featurePaymentRepository.create({
           amount: session.amount_total / 100,
           currency: session.currency,

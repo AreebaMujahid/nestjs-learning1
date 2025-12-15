@@ -5,13 +5,15 @@ import { SeederService } from './modules/shared/seeder/seeder.service';
 import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
   const seeder = app.get(SeederService);
   await seeder.seed();
   app.useGlobalPipes(new ValidationPipe());
   //for webhook
   app.use(
-    '/stripe/webhook',
+    '/webhook/webhook',
     bodyParser.raw({
       type: 'application/json',
     }),

@@ -19,6 +19,7 @@ import { UploadService } from '../shared/upload/upload.service';
 import { StripeService } from '../stripe/stripe.service';
 import { FeaturePayment } from './entities/feature-payment.entity';
 import { UpdateListingInput } from './dto/update-listing-input.dto';
+import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
 
 @Injectable()
 export class ListingService {
@@ -165,10 +166,11 @@ export class ListingService {
       return { session };
     }
   }
-  async fetchAllistings(user: JwtTokenPayload) {
+  async fetchAllistings(input: FetchAllListingsInput, user: JwtTokenPayload) {
     const list = await this.listingRepository.find({
       where: {
         owner: { id: user.userId },
+        isActive: input.isActive,
       },
       relations: ['owner', 'category', 'subCategory', 'package'],
     });

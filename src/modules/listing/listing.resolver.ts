@@ -10,6 +10,7 @@ import { CurrentUser } from 'src/utilities/decorators/user.decorator';
 import type { JwtTokenPayload } from 'src/utilities/types/token-payload';
 import { ListingResponse } from './dto/listing-response.dto';
 import { UpdateListingInput } from './dto/update-listing-input.dto';
+import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -43,10 +44,11 @@ export class ListingResolver {
   @Query(() => [ListingResponse])
   @UseGuards(AuthGuard)
   async fetchAllListing(
+    @Args('fetchAllListingsInput') fetchAllListingsInput: FetchAllListingsInput,
     @CurrentUser()
     user: JwtTokenPayload,
   ) {
-    return this.listingService.fetchAllistings(user);
+    return this.listingService.fetchAllistings(fetchAllListingsInput, user);
   }
 
   @Mutation(() => Boolean)

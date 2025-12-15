@@ -18,6 +18,7 @@ import { Package } from './entities/package.entity';
 import { UploadService } from '../shared/upload/upload.service';
 import { StripeService } from '../stripe/stripe.service';
 import { FeaturePayment } from './entities/feature-payment.entity';
+import { UpdateListingInput } from './dto/update-listing-input.dto';
 
 @Injectable()
 export class ListingService {
@@ -203,6 +204,31 @@ export class ListingService {
     listing.isArchived = true;
     listing.isActive = false;
 
+    await this.listingRepository.save(listing);
+    return true;
+  }
+  async updateListingStatus(input: UpdateListingInput, user: JwtTokenPayload) {
+    const { listingId, isActive } = input;
+    const listing = await this.listingRepository.findOne({
+      where: { id: listingId },
+      relations: ['owner'],
+    });
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+    if (listing.isArchived && isActive) {
+      throw new BadRequestException('Archived listing cannot be activated');
+    }
+    const isOwner = listing.owner?.id === user.userId;
+    if (!isOwner) {
+      throw new ForbiddenException(
+        'You are not allowed to update this listing',
+      );
+    }
+    if (listing.isActive === isActive) {
+      return true;
+    }
+    listing.isActive = true;
     await this.listingRepository.save(listing);
     return true;
   }

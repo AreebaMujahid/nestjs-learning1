@@ -9,6 +9,7 @@ import { UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/utilities/decorators/user.decorator';
 import type { JwtTokenPayload } from 'src/utilities/types/token-payload';
 import { ListingResponse } from './dto/listing-response.dto';
+import { UpdateListingInput } from './dto/update-listing-input.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -55,5 +56,14 @@ export class ListingResolver {
     @Args('id') id: string,
   ) {
     return this.deleteListing(user, id);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(AuthGuard)
+  async updateListingStatus(
+    @Args('input') input: UpdateListingInput,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    return this.updateListingStatus(input, user);
   }
 }

@@ -17,6 +17,9 @@ export class Package {
   @Column({ unique: true })
   name: string;
 
+  @Column({ name: 'stripe_price_id', unique: true, nullable: true })
+  stripePriceId: string;
+
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',

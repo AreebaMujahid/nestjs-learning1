@@ -89,5 +89,20 @@ export class SeederService {
     await this.packageRepo.upsert(packagesToSeed, ['name']);
     this.logger.log('Packages upserted successfully');
     this.logger.log('Seeding complete!');
+
+    const packagePriceMap: Record<string, string> = {
+      Basic: 'price_1Sd9u1JtxSixdKjhKMitt9wZ',
+      Bronze: 'price_1Sd9ueJtxSixdKjhUsKA7iMJ',
+      Silver: 'price_1Sd9vBJtxSixdKjha5y5QJOt',
+      Gold: 'price_1Sd9x2JtxSixdKjhlehj1qbt',
+      Platinum: 'price_1Sd9xNJtxSixdKjhKuJ20arT',
+    };
+
+    const packagesIdsToSeed = Object.entries(packagePriceMap).map(
+      ([name, stripePriceId]) => ({ name, stripePriceId }),
+    );
+
+    await this.packageRepo.upsert(packagesIdsToSeed, ['name']);
+    this.logger.log('Packages upserted successfully with priceIds');
   }
 }

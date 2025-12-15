@@ -11,6 +11,7 @@ import type { JwtTokenPayload } from 'src/utilities/types/token-payload';
 import { ListingResponse } from './dto/listing-response.dto';
 import { UpdateListingInput } from './dto/update-listing-input.dto';
 import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
+import { PackageDTO } from './dto/package.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -57,7 +58,7 @@ export class ListingResolver {
     @CurrentUser() user: JwtTokenPayload,
     @Args('id') id: string,
   ) {
-    return this.deleteListing(user, id);
+    return this.listingService.deleteListing(user, id);
   }
 
   @Mutation(() => Boolean)
@@ -66,6 +67,12 @@ export class ListingResolver {
     @Args('input') input: UpdateListingInput,
     @CurrentUser() user: JwtTokenPayload,
   ) {
-    return this.updateListingStatus(input, user);
+    return this.listingService.updateListingStatus(input, user);
+  }
+
+  @Query(() => [PackageDTO])
+  @UseGuards(AuthGuard)
+  async fetchAllPackages() {
+    return this.listingService.fetchAllPackages();
   }
 }

@@ -234,4 +234,10 @@ export class ListingService {
     await this.listingRepository.save(listing);
     return true;
   }
+  async fetchAllPackages() {
+    const packages = await this.packageRepository.find({
+      order: { id: 'ASC' },
+    });
+    return packages;
+  }
 }

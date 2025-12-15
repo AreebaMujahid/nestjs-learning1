@@ -14,6 +14,7 @@ import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
 import { PackageDTO } from './dto/package.dto';
 import { CountryDto } from './dto/country.dto';
 import { EditListingInput } from './dto/edit-listing-input.dto';
+import { UpgradeListingPackageInput } from './dto/upgrade-listing-package-input.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -104,5 +105,14 @@ export class ListingResolver {
   @Query(() => ListingResponse)
   async getListingById(@Args('id', { type: () => Int }) id: number) {
     return this.listingService.getListingById(id);
+  }
+
+  @Mutation(() => String)
+  @UseGuards(AuthGuard)
+  async updateListingPackageCheckout(
+    @Args('input') input: UpgradeListingPackageInput,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    return this.listingService.updateListingPackageCheckout(input, user);
   }
 }

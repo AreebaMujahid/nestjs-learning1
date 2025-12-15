@@ -24,6 +24,8 @@ import { GeoPoint } from 'src/utilities/types/geojson.type';
 import * as countries from 'i18n-iso-countries';
 import { ListingImage } from './entities/listing-images.entity';
 import { EditListingInput } from './dto/edit-listing-input.dto';
+import { UpgradeListingPackageInput } from './dto/upgrade-listing-package-input.dto';
+import { stripe } from '../stripe/stripe';
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 @Injectable()
@@ -405,5 +407,77 @@ export class ListingService {
     if (!listing) throw new Error('Listing not found');
 
     return listing;
+  }
+  //edge case: might be possible kay non-featured se vo featured maiy convert ho rha ho , by selecting a package
+  async updateListingPackageCheckout(
+    input: UpgradeListingPackageInput,
+    user: JwtTokenPayload,
+  ) {
+    const listing = await this.listingRepository.findOne({
+      where: { id: input.listingId },
+    });
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+    if (!listing.package) {
+      throw new BadRequestException('Listing has no active package');
+    }
+    const targetedPackage = await this.packageRepository.findOne({
+      where: { id: input.targetedPackageId },
+    });
+    if (!targetedPackage) {
+      throw new NotFoundException('Target package not found');
+    }
+    if (listing.package.id === input.targetedPackageId) {
+      throw new BadRequestException('Listing already has this package');
+    }
+    let amountToCharge: number;
+    let previousPackageId: number | null = null;
+
+    if (!listing.package) {
+      // First-time package purchase
+      amountToCharge = targetedPackage.price;
+    } else {
+      previousPackageId = listing.package.id;
+
+      if (listing.package.id === targetedPackage.id) {
+        throw new BadRequestException('Listing already has this package');
+      }
+
+      amountToCharge = targetedPackage.price - listing.package.price;
+
+      if (amountToCharge <= 0) {
+        throw new BadRequestException(
+          'Downgrades or zero-price upgrades are not allowed',
+        );
+      }
+    }
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            unit_amount: Math.round(amountToCharge * 100),
+            product_data: {
+              name: listing.package
+                ? `Upgrade ${listing.package.name} → ${targetedPackage.name}`
+                : `Purchase ${targetedPackage.name}`,
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        listingId: listing.id.toString(),
+        previousPackageId: previousPackageId?.toString() || null,
+        targetPackageId: targetedPackage.id.toString(),
+        upgradeType: 'LISTING_PACKAGE_UPGRADE',
+      },
+      success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+    });
+    return session.url;
   }
 }

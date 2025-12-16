@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Res } from '@nestjs/common'; // ← Add Req, Res here
+import { Controller, Post, Req, Res, Logger } from '@nestjs/common';
 import { stripe } from '../stripe/stripe';
 import type { Request, Response } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,6 +9,8 @@ import { Package } from '../listing/entities/package.entity';
 
 @Controller('webhook')
 export class WebhookController {
+  private readonly logger = new Logger(WebhookController.name);
+
   constructor(
     @InjectRepository(Listing)
     private readonly listingRepository: Repository<Listing>,
@@ -17,10 +19,12 @@ export class WebhookController {
     @InjectRepository(Package)
     private readonly packageRepository: Repository<Package>,
   ) {}
+
   @Post('webhook')
   async handleStripeWebhook(@Req() req: Request, @Res() res: Response) {
     let event;
     const signature = req.headers['stripe-signature'] as string;
+
     try {
       event = stripe.webhooks.constructEvent(
         (req as any).rawBody,
@@ -28,40 +32,39 @@ export class WebhookController {
         process.env.STRIPE_WEBHOOK_SECRET!,
       );
     } catch (err: any) {
-      console.log('Webhook signature verification failed:', err.message);
+      this.logger.warn(`Webhook signature verification failed: ${err.message}`);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Process events
     switch (event.type) {
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
         const session = event.data.object as any;
         const metadata = session.metadata;
-        const listingid = Number(metadata.listingId);
+        const listingId = Number(metadata.listingId);
         const targetPackageId = Number(metadata.targetedPackageId);
         const previousPackageId = metadata.previousPackageId
           ? Number(metadata.previousPackageId)
           : null;
 
-        //Update database, save payment details
-        const listing = this.listingRepository.create({
-          name: metadata.name,
-          description: metadata.description,
-          package: { id: metadata.packageId },
-          owner: { id: metadata.ownerId },
-        });
-        await this.listingRepository.save(listing);
-
-        const listing = await this.listingRepository.findOne({
+        // Fetch existing listing
+        let listing = await this.listingRepository.findOne({
           where: { id: listingId },
           relations: ['package'],
         });
 
+        // If listing does not exist, create it
         if (!listing) {
-          this.logger.warn(`Listing ${listingId} not found`);
-          return res.status(404).send('Listing not found');
+          listing = this.listingRepository.create({
+            name: metadata.name,
+            description: metadata.description,
+            package: { id: metadata.packageId },
+            owner: { id: metadata.ownerId },
+          });
+          await this.listingRepository.save(listing);
+          this.logger.log(`Listing ${listingId} created.`);
         }
 
+        // Fetch the target package
         const targetPackage = await this.packageRepository.findOne({
           where: { id: targetPackageId },
         });
@@ -75,13 +78,12 @@ export class WebhookController {
         if (!listing.package || listing.package.id !== targetPackageId) {
           listing.package = targetPackage;
           await this.listingRepository.save(listing);
-
           this.logger.log(
-            `Listing ${listingId} package set/updated to ${targetPackage.name}`,
+            `Listing ${listing.id} package set/updated to ${targetPackage.name}`,
           );
         } else {
           this.logger.log(
-            `Listing ${listingId} already has package ${targetPackage.name}, no change.`,
+            `Listing ${listing.id} already has package ${targetPackage.name}, no change.`,
           );
         }
 
@@ -96,18 +98,18 @@ export class WebhookController {
         await this.featurePaymentRepository.save(payment);
 
         break;
+      }
 
       case 'checkout.session.expired':
-        console.log('Checkout session expired');
-        // TODO: Handle failure / expiration
+        this.logger.warn('Checkout session expired');
         break;
 
       case 'payment_intent.payment_failed':
-        console.log('Payment failed');
+        this.logger.warn('Payment failed');
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        this.logger.log(`Unhandled event type: ${event.type}`);
     }
 
     res.status(200).send('ok');

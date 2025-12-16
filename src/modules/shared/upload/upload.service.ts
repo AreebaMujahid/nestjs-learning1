@@ -17,7 +17,7 @@ export class UploadService {
   async upload(fileName: string, file: Buffer): Promise<string> {
     await this.s3Client.send(
       new PutObjectCommand({
-        Bucket: this.configService.getOrThrow('S3_BUCKET'),
+        Bucket: this.configService.getOrThrow('S3_Bucket'),
         Key: fileName,
         Body: file,
       }),

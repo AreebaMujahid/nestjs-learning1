@@ -18,7 +18,7 @@ export class UserResolver {
 
   @Query(() => User)
   @UseGuards(AuthGuard)
-  meRoute(@CurrentUser() user: JwtTokenPayload) {
+  getProfile(@CurrentUser() user: JwtTokenPayload) {
     return this.userService.meRoute(user);
   }
 

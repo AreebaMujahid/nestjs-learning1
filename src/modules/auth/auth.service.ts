@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { SignUpInput } from './dto/signup.input.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { User } from '../user/entity/user.entity';
 import * as bcrypt from 'bcrypt';
 import { JwtAuthService } from '../shared/jwt/jwt.service';
@@ -29,6 +29,7 @@ import { JwtTokenPayload } from 'src/utilities/types/token-payload';
 import { ChangePasswordInput } from './dto/change-password.input.dto';
 import { CompleteProfileInput } from './dto/complete-profile.input.dto';
 import { UploadService } from '../shared/upload/upload.service';
+import { Crew } from '../crew/entity/crew.entity';
 @Injectable()
 export class AuthService {
   constructor(
@@ -228,6 +229,7 @@ export class AuthService {
     return {
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
+      user: user,
     };
   }
   async loginWithGoogle({ idToken }: LoginGoogleInput) {
@@ -260,7 +262,11 @@ export class AuthService {
     } else {
       tokens = this.generateAuthTokens(user);
     }
-    return tokens;
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: user,
+    };
   }
   async refreshAccessToken(refreshAccessTokenInput: RefreshAccessTokenInput) {
     const payload = this.jwtAuthService.verifyToken(
@@ -274,7 +280,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid payload');
     }
     const tokens = this.generateAuthTokens(user);
-    return tokens;
+    return {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      user: user,
+    };
   }
   async changePassword(
     changePasswordInput: ChangePasswordInput,
@@ -296,11 +306,6 @@ export class AuthService {
       }
     }
     if (
-      changePasswordInput.newPassword !== changePasswordInput.confirmNewPassword
-    ) {
-      throw new ForbiddenException('Passwords mismatch');
-    }
-    if (
       changePasswordInput.currentPassword === changePasswordInput.newPassword
     ) {
       throw new ForbiddenException(
@@ -316,17 +321,63 @@ export class AuthService {
     profilePicture: Promise<FileUpload> | null,
     user: JwtTokenPayload,
   ) {
-    let s3Url: string | undefined = undefined;
-    if (profilePicture) {
-      const { createReadStream, filename } = await profilePicture;
-      const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
-        const chunks: Buffer[] = [];
-        createReadStream()
-          .on('data', (chunk) => chunks.push(chunk))
-          .on('end', () => resolve(Buffer.concat(chunks)))
-          .on('error', reject);
+    //TODO: country name validation
+    try {
+      let s3Url: string | undefined = undefined;
+      if (profilePicture) {
+        const { createReadStream, filename } = await profilePicture;
+        const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
+          const chunks: Buffer[] = [];
+          createReadStream()
+            .on('data', (chunk) => chunks.push(chunk))
+            .on('end', () => resolve(Buffer.concat(chunks)))
+            .on('error', reject);
+        });
+        s3Url = await this.uploadService.upload(filename, fileBuffer);
+      }
+      const userEntity = await this.userRepository.findOne({
+        where: { id: user.userId },
+        relations: ['crew'],
       });
-      s3Url = await this.uploadService.upload(filename, fileBuffer);
+      if (!userEntity) throw new Error('User not found');
+      Object.assign(userEntity, {
+        boatName: input.boatName || userEntity.boatName,
+        contactNumber: input.contactNumber || userEntity.contactNumber,
+        ownerCaptain: input.ownerCaptain || userEntity.ownerCaptain,
+        website: input.website || userEntity.websiteUrl,
+        country: input.country || userEntity.countryName,
+      });
+      if (s3Url) {
+        userEntity.profilePicture = s3Url;
+      }
+      const queryRunner =
+        this.userRepository.manager.connection.createQueryRunner();
+      try {
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        if (input.crew?.length) {
+          for (const c of input.crew) {
+            const newCrew = queryRunner.manager.create(Crew, {
+              ...c,
+              user: userEntity,
+            });
+            await queryRunner.manager.save(Crew, newCrew);
+          }
+        }
+        await queryRunner.commitTransaction();
+        return true;
+      } catch {
+        if (queryRunner) {
+          await queryRunner.commitTransaction();
+        }
+        console.error();
+      } finally {
+        if (queryRunner) {
+          await queryRunner.release();
+        }
+      }
+    } catch (err) {
+      console.error(`Error while completeing profile: ${err.message}`);
     }
     const userEntity = await this.userRepository.findOne({
       where: { id: user.userId },
@@ -342,9 +393,6 @@ export class AuthService {
       country: input.country,
       status: input.status,
     });
-    if (s3Url) {
-      userEntity.profilePicture = s3Url;
-    }
     if (input.crew?.length) {
       userEntity.crew = input.crew as unknown as any[];
     }

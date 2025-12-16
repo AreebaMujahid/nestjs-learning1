@@ -52,13 +52,14 @@ export class ListingService {
     return this.categoryRepository.find();
   }
   async getSubCategories(id: string) {
-    const subCategory = await this.subCategoryRepository.find({
+    const subcategories = await this.subCategoryRepository.find({
       where: { category_id: Number(id) },
     });
-    if (!subCategory) {
+    if (!subcategories) {
       throw new NotFoundException('Category not found');
     }
-    return subCategory;
+    console.log(subcategories);
+    return subcategories;
   }
   //(ALL EDGE CASES)
   //1- (done)if service type is commercial , only then commercial price is required.
@@ -75,10 +76,10 @@ export class ListingService {
     images: Promise<FileUpload>[] | null,
     user: JwtTokenPayload,
   ) {
-    const ExistingUser = await this.userRepository.findOne({
+    const existingUser = await this.userRepository.findOne({
       where: { id: user.userId },
     });
-    if (!ExistingUser) {
+    if (!existingUser) {
       throw new NotFoundException('User does not exists');
     }
     if (
@@ -120,10 +121,6 @@ export class ListingService {
         id: Number(input.packageType),
       },
     });
-    if (!packageType) {
-      throw new BadRequestException('Package does not exists');
-    }
-
     let listingImages: ListingImage[] = [];
 
     if (images && images.length > 0) {
@@ -168,10 +165,10 @@ export class ListingService {
           ],
         },
         images: listingImages,
-        owner: ExistingUser,
+        owner: existingUser,
       });
       const savedListing = await this.listingRepository.save(listing);
-      return true;
+      return { success: true };
     } else {
       const session = await this.stripeService.createCheckoutSession(
         input.priceId,
@@ -179,25 +176,28 @@ export class ListingService {
           listingData: input,
         },
       );
-      console.log('sesion', session);
-      return { session };
+      return { sessionId: session };
     }
   }
   async fetchAllistings(input: FetchAllListingsInput, user: JwtTokenPayload) {
-    const list = await this.listingRepository.find({
-      where: {
-        owner: { id: user.userId },
-        isActive: input.isActive,
-      },
-      relations: ['owner', 'category', 'subCategory', 'package', 'images'],
-    });
-    return list.map((listing) => ({
-      ...listing,
-      images: listing.images.map((img) => ({
-        id: img.id,
-        url: img.url,
-      })),
-    }));
+    return this.listingRepository
+      .createQueryBuilder('listing')
+      .leftJoinAndSelect('listing.owner', 'owner')
+      .leftJoinAndSelect('listing.category', 'category')
+      .leftJoinAndSelect('listing.subCategory', 'subCategory')
+      .leftJoinAndSelect('listing.package', 'package')
+      .leftJoin('listing.images', 'image')
+      .where('owner.id=:ownerId', { ownerId: user.userId })
+      .andWhere('listing.isActive=:isActive', { isActive: input.isActive })
+      .select([
+        'listing',
+        'owner.id',
+        'category.id',
+        'package.id',
+        'image.id',
+        'image.url',
+      ])
+      .getMany();
   }
   async deleteListing(user: JwtTokenPayload, listingId: string) {
     const listing = await this.listingRepository.findOne({

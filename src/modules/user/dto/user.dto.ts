@@ -1,7 +1,13 @@
-import { ObjectType } from '@nestjs/graphql';
-import { Field } from '@nestjs/graphql';
-import type { GeoPoint } from 'src/utilities/types/geojson.type';
+import { ObjectType, Field, Float } from '@nestjs/graphql';
 
+@ObjectType()
+export class GeoPoint {
+  @Field(() => Float)
+  latitude: number;
+
+  @Field(() => Float)
+  longitude: number;
+}
 @ObjectType()
 export class User {
   @Field()
@@ -36,4 +42,22 @@ export class User {
 
   @Field({ nullable: true })
   currentAddress: string;
+
+  @Field({ nullable: true })
+  boatName?: string;
+
+  @Field({ nullable: true })
+  contactNumber?: string;
+
+  @Field({ nullable: true })
+  ownerCaptain?: string;
+
+  @Field({ nullable: true })
+  websiteUrl?: string;
+
+  @Field({ nullable: true })
+  countryName?: string;
+
+  @Field({ nullable: true })
+  currentLocation?: GeoPoint;
 }

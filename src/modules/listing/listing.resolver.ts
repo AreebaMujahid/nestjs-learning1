@@ -15,6 +15,7 @@ import { PackageDTO } from './dto/package.dto';
 import { CountryDto } from './dto/country.dto';
 import { EditListingInput } from './dto/edit-listing-input.dto';
 import { UpgradeListingPackageInput } from './dto/upgrade-listing-package-input.dto';
+import { CreateListingResult } from './dto/create-listing-response.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -30,7 +31,7 @@ export class ListingResolver {
     return this.listingService.getSubCategories(id);
   }
 
-  @Mutation(() => String)
+  @Mutation(() => CreateListingResult)
   @UseGuards(AuthGuard)
   async createListing(
     @Args('createListingInput') createListinginput: CreateListinginput,

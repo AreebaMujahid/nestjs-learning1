@@ -15,10 +15,4 @@ export class ChangePasswordInput {
   @IsNotEmpty()
   @IsStrongPassword()
   newPassword: string;
-
-  @Field()
-  @IsString()
-  @IsNotEmpty()
-  @IsStrongPassword()
-  confirmNewPassword: string;
 }

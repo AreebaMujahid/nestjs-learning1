@@ -179,6 +179,7 @@ export class ListingService {
           listingData: input,
         },
       );
+      console.log('sesion', session);
       return { session };
     }
   }

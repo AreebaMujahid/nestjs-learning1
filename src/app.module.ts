@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -13,6 +13,10 @@ import { graphqlUploadExpress } from 'graphql-upload-ts';
 import { DatabaseWrapperModule } from './configs/database-config/database-wrapper.module';
 import { ConfigWrapperModule } from './configs/env-config/configuration-wrapper.module';
 import { ConfigModule } from '@nestjs/config';
+import { SharedModule } from './modules/shared/shared.module';
+import { ListingModule } from './modules/listing/listing.module';
+import { StripeModule } from './modules/stripe/stripe.module';
+import * as bodyParser from 'body-parser';
 const env = process.env.NODE_ENV || 'development';
 @Module({
   imports: [
@@ -27,6 +31,7 @@ const env = process.env.NODE_ENV || 'development';
       autoSchemaFile: true,
       introspection: true,
       playground: true,
+      //uploads: false,
       context: ({ req, res }: { req: Request; res: Response }) => ({
         req,
         res,
@@ -35,12 +40,20 @@ const env = process.env.NODE_ENV || 'development';
     UserModule,
     CrewModule,
     AuthModule,
+    SharedModule,
+    ListingModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthResolver],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    //for rest endpoint (webhook)
+    consumer
+      .apply(bodyParser.raw({ type: 'application/json' }))
+      .forRoutes({ path: 'stripe/webhook', method: RequestMethod.POST });
+    // for graphql
     consumer
       .apply(
         graphqlUploadExpress({

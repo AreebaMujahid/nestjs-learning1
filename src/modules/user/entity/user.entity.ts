@@ -10,6 +10,7 @@ import {
 import { ID } from '@nestjs/graphql';
 import { Crew } from 'src/modules/crew/entity/crew.entity';
 import type { GeoPoint } from 'src/utilities/types/geojson.type';
+import { Listing } from 'src/modules/listing/entities/listing.entity';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn(ID)
@@ -39,9 +40,6 @@ export class User {
   @Column({ name: 'is_profile_complete', default: false })
   isProfileComplete: boolean;
 
-  @Column()
-  role: string;
-
   @Column({ name: 'active_otp', nullable: true })
   activeOtp?: string;
 
@@ -69,7 +67,7 @@ export class User {
   @Column({ name: 'website_url', nullable: true })
   websiteUrl?: string;
 
-  @OneToMany(() => Crew, (crew) => crew.user)
+  @OneToMany(() => Crew, (crew) => crew.user, { cascade: true, eager: true })
   crew: Crew[];
 
   @Column({ name: 'country_name', nullable: true })
@@ -97,4 +95,7 @@ export class User {
     onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt: Date;
+
+  @OneToMany(() => Listing, (listing) => listing.owner)
+  listings: Listing[];
 }

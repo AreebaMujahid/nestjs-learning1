@@ -106,8 +106,12 @@ export class ListingResolver {
 
   //fetch listing by id ka end point , then test edit ka flow
   @Query(() => ListingResponse)
-  async getListingById(@Args('id', { type: () => Int }) id: number) {
-    return this.listingService.getListingById(id);
+  @UseGuards(AuthGuard)
+  async getListingById(
+    @Args('id', { type: () => Int }) id: number,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    return this.listingService.getListingById(id, user);
   }
 
   @Mutation(() => String)

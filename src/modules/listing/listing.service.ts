@@ -427,15 +427,24 @@ export class ListingService {
     return savedOne;
   }
   // src/modules/listing/listing.service.ts
-  async getListingById(id: number) {
+  async getListingById(id: number, user: JwtTokenPayload) {
     const listing = await this.listingRepository.findOne({
       where: { id },
       relations: ['images', 'category', 'subCategory', 'package'],
     });
-
+    console.log('user id :', user.userId);
     if (!listing) throw new Error('Listing not found');
-
-    return listing;
+    const favourite = await this.favouriteListingRepository.findOne({
+      where: {
+        user: { id: user?.userId },
+        listing: { id },
+      },
+    });
+    const isFavourite = !!favourite;
+    return {
+      ...listing,
+      isFavourite,
+    };
   }
   //edge case: might be possible kay non-featured se vo featured maiy convert ho rha ho , by selecting a package
   async updateListingPackageCheckout(

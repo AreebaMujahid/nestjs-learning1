@@ -12,6 +12,7 @@ import { Listing } from './entities/listing.entity';
 import { StripeService } from '../stripe/stripe.service';
 import { FeaturePayment } from './entities/feature-payment.entity';
 import { ListingImage } from './entities/listing-images.entity';
+import { FavouriteListing } from './entities/favorourit-listing.entity';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ListingImage } from './entities/listing-images.entity';
       Package,
       FeaturePayment,
       ListingImage,
+      FavouriteListing,
     ]),
     SharedModule,
     ConfigModule,

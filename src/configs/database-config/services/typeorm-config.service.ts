@@ -10,6 +10,7 @@ import { ConfigService } from '@nestjs/config';
 import { Package } from 'src/modules/listing/entities/package.entity';
 import { FeaturePayment } from 'src/modules/listing/entities/feature-payment.entity';
 import { ListingImage } from 'src/modules/listing/entities/listing-images.entity';
+import { FavouriteListing } from 'src/modules/listing/entities/favorourit-listing.entity';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -33,6 +34,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
         Package,
         FeaturePayment,
         ListingImage,
+        FavouriteListing,
       ],
       //logging: true,
       migrations: [],

@@ -26,6 +26,8 @@ import { ListingImage } from './entities/listing-images.entity';
 import { EditListingInput } from './dto/edit-listing-input.dto';
 import { UpgradeListingPackageInput } from './dto/upgrade-listing-package-input.dto';
 import { stripe } from '../stripe/stripe';
+import { FavouritelistingInput } from './dto/favourite-listing-input.dto';
+import { FavouriteListing } from './entities/favorourit-listing.entity';
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
 
 @Injectable()
@@ -45,6 +47,8 @@ export class ListingService {
     private readonly featurePaymentRepository: Repository<FeaturePayment>,
     @InjectRepository(ListingImage)
     private readonly listingImageRepository: Repository<ListingImage>,
+    @InjectRepository(FavouriteListing)
+    private readonly favouriteListingRepository: Repository<FavouriteListing>,
     private uploadService: UploadService,
     private stripeService: StripeService,
   ) {}
@@ -506,5 +510,45 @@ export class ListingService {
       cancel_url: `${process.env.FRONTEND_URL}/cancel`,
     });
     return session.url;
+  }
+  async addListingToFavourite(
+    input: FavouritelistingInput,
+    user: JwtTokenPayload,
+  ) {
+    const listing = await this.listingRepository.findOne({
+      where: { id: Number(input.listingId) },
+    });
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+    if (listing.owner.id !== user.userId) {
+      throw new BadRequestException(
+        'You can only favourite/unfavourite your own listings only',
+      );
+    }
+    const alreadyFavourite = await this.favouriteListingRepository.findOne({
+      where: {
+        user: { id: user.userId },
+        listing: { id: Number(input.listingId) },
+      },
+    });
+    if (input.isFavourite) {
+      if (alreadyFavourite) {
+        throw new BadRequestException('Listing already in favourites');
+      }
+      const favourite = this.favouriteListingRepository.create({
+        user: { id: user.userId },
+        listing: { id: Number(input.listingId) },
+      });
+      await this.favouriteListingRepository.save(favourite);
+    }
+    if (!input.isFavourite) {
+      if (!alreadyFavourite) {
+        throw new BadRequestException('Listing is not in favourite');
+      }
+      //removing that row from table (need suggestion in PR)
+      await this.favouriteListingRepository.remove(alreadyFavourite);
+    }
+    return true;
   }
 }

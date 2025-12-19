@@ -17,6 +17,7 @@ import { EditListingInput } from './dto/edit-listing-input.dto';
 import { UpgradeListingPackageInput } from './dto/upgrade-listing-package-input.dto';
 import { CreateListingResult } from './dto/create-listing-response.dto';
 import { PaginatedListings } from './dto/fetch-all-listings-filter.dto';
+import { FavouritelistingInput } from './dto/favourite-listing-input.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -116,5 +117,14 @@ export class ListingResolver {
     @CurrentUser() user: JwtTokenPayload,
   ) {
     return this.listingService.updateListingPackageCheckout(input, user);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(AuthGuard)
+  async addListingToFavourite(
+    @Args('input') input: FavouritelistingInput,
+    @CurrentUser() user: JwtTokenPayload,
+  ) {
+    return this.listingService.addListingToFavourite(input, user);
   }
 }

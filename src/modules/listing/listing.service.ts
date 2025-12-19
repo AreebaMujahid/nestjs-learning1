@@ -180,7 +180,8 @@ export class ListingService {
     }
   }
   async fetchAllistings(input: FetchAllListingsInput, user: JwtTokenPayload) {
-    return this.listingRepository
+    const { limit = 10, offset = 0 } = input.pagination;
+    const [listings, total] = this.listingRepository
       .createQueryBuilder('listing')
       .leftJoinAndSelect('listing.owner', 'owner')
       .leftJoinAndSelect('listing.category', 'category')
@@ -197,7 +198,9 @@ export class ListingService {
         'image.id',
         'image.url',
       ])
-      .getMany();
+      .take(limit)
+      .skip(offset)
+      .getManyAndCount();
   }
   async deleteListing(user: JwtTokenPayload, listingId: string) {
     const listing = await this.listingRepository.findOne({

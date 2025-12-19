@@ -9,6 +9,17 @@ export class GeoPoint {
   longitude: number;
 }
 @ObjectType()
+export class Crew {
+  @Field()
+  id: number;
+
+  @Field()
+  name: string;
+
+  @Field()
+  designation: string;
+}
+@ObjectType()
 export class User {
   @Field()
   id: string;
@@ -60,4 +71,7 @@ export class User {
 
   @Field({ nullable: true })
   currentLocation?: GeoPoint;
+
+  @Field(() => [Crew], { nullable: true })
+  crew: Crew[];
 }

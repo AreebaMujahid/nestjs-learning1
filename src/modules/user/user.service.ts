@@ -14,12 +14,16 @@ export class UserService {
   constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
 
   async meRoute(user: JwtTokenPayload) {
-    const dbUser = await this.userRepo.findOne({
-      where: { id: user.userId },
-    });
+    const dbUser = await this.userRepo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.crew', 'crew')
+      .where('user.id= :id', { id: user.userId })
+      .getOne();
+
     if (!dbUser) {
       throw new NotFoundException('User not found');
     }
+    console.log(dbUser);
     return dbUser;
   }
   // async editProfile(editProfileInput: EditProfileInput, user: JwtTokenPayload) {

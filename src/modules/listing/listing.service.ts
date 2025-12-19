@@ -180,28 +180,42 @@ export class ListingService {
     }
   }
   async fetchAllistings(input: FetchAllListingsInput, user: JwtTokenPayload) {
-    const { limit = 10, offset = 0 } = input.pagination;
-    const [listings, total] = this.listingRepository
+    const { page = 1, perPage = 10 } = input.pagination || {};
+    const skip = (page - 1) * perPage;
+    const listings = await this.listingRepository
       .createQueryBuilder('listing')
-      .leftJoinAndSelect('listing.owner', 'owner')
+      .leftJoinAndSelect('listing.images', 'images')
       .leftJoinAndSelect('listing.category', 'category')
       .leftJoinAndSelect('listing.subCategory', 'subCategory')
       .leftJoinAndSelect('listing.package', 'package')
-      .leftJoin('listing.images', 'image')
-      .where('owner.id=:ownerId', { ownerId: user.userId })
-      .andWhere('listing.isActive=:isActive', { isActive: input.isActive })
-      .select([
-        'listing',
-        'owner.id',
-        'category.id',
-        'package.id',
-        'image.id',
-        'image.url',
-      ])
-      .take(limit)
-      .skip(offset)
-      .getManyAndCount();
+      .leftJoin('listing.owner', 'owner')
+      .where('owner.id = :ownerId', { ownerId: user.userId })
+      .andWhere('listing.isActive = :isActive', { isActive: input.isActive })
+      .distinctOn(['listing.id']) // ensures one row per listing as multiple images per listing
+      .orderBy('listing.id', 'DESC')
+      .skip(skip)
+      .take(perPage)
+      .getMany();
+
+    const total = await this.listingRepository.count({
+      where: {
+        owner: { id: user.userId },
+        isActive: input.isActive,
+      },
+    });
+
+    return {
+      data: listings,
+      total,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPage: total > page * perPage ? page + 1 : null,
+      hasNextPage: total > page * perPage,
+      hasPreviousPage: page > 1,
+      totalPages: Math.ceil(total / perPage),
+      perPage,
+    };
   }
+
   async deleteListing(user: JwtTokenPayload, listingId: string) {
     const listing = await this.listingRepository.findOne({
       where: { id: Number(listingId) },

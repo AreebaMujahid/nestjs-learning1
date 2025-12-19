@@ -22,13 +22,13 @@ export class CompleteProfileInput {
   ownerCaptain?: string;
 
   @Field({ nullable: true })
-  website?: string;
+  websiteUrl?: string;
 
   @Field(() => [CrewInput], { nullable: true })
   crew?: CrewInput[];
   //crew - array of key-value pair
   @Field({ nullable: true })
-  country?: string;
+  countryName?: string;
 
   @Field({ nullable: true })
   status?: string;

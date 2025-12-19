@@ -318,23 +318,23 @@ export class AuthService {
   }
   async completeProfile(
     input: CompleteProfileInput,
-    profilePicture: Promise<FileUpload> | null,
+    //profilePicture: Promise<FileUpload> | null,
     user: JwtTokenPayload,
   ) {
     //TODO: country name validation
     try {
-      let s3Url: string | undefined = undefined;
-      if (profilePicture) {
-        const { createReadStream, filename } = await profilePicture;
-        const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
-          const chunks: Buffer[] = [];
-          createReadStream()
-            .on('data', (chunk) => chunks.push(chunk))
-            .on('end', () => resolve(Buffer.concat(chunks)))
-            .on('error', reject);
-        });
-        s3Url = await this.uploadService.upload(filename, fileBuffer);
-      }
+      // let s3Url: string | undefined = undefined;
+      // if (profilePicture) {
+      //   const { createReadStream, filename } = await profilePicture;
+      //   const fileBuffer = await new Promise<Buffer>((resolve, reject) => {
+      //     const chunks: Buffer[] = [];
+      //     createReadStream()
+      //       .on('data', (chunk) => chunks.push(chunk))
+      //       .on('end', () => resolve(Buffer.concat(chunks)))
+      //       .on('error', reject);
+      //   });
+      //   s3Url = await this.uploadService.upload(filename, fileBuffer);
+      // }
       const userEntity = await this.userRepository.findOne({
         where: { id: user.userId },
         relations: ['crew'],
@@ -344,14 +344,15 @@ export class AuthService {
         boatName: input.boatName || userEntity.boatName,
         contactNumber: input.contactNumber || userEntity.contactNumber,
         ownerCaptain: input.ownerCaptain || userEntity.ownerCaptain,
-        website: input.website || userEntity.websiteUrl,
-        country: input.country || userEntity.countryName,
+        website: input.websiteUrl || userEntity.websiteUrl,
+        country: input.countryName || userEntity.countryName,
       });
-      if (s3Url) {
-        userEntity.profilePicture = s3Url;
-      }
+      // if (s3Url) {
+      //   userEntity.profilePicture = s3Url;
+      // }
       const queryRunner =
         this.userRepository.manager.connection.createQueryRunner();
+      await queryRunner.manager.save(userEntity);
       try {
         await queryRunner.connect();
         await queryRunner.startTransaction();
@@ -383,21 +384,19 @@ export class AuthService {
       where: { id: user.userId },
       relations: ['crew'],
     });
-
     if (!userEntity) throw new Error('User not found');
     Object.assign(userEntity, {
       boatName: input.boatName,
       contactNumber: input.contactNumber,
       ownerCaptain: input.ownerCaptain,
-      website: input.website,
-      country: input.country,
+      websiteUrl: input.websiteUrl,
+      countryName: input.countryName,
       status: input.status,
     });
     if (input.crew?.length) {
       userEntity.crew = input.crew as unknown as any[];
     }
-    console.log('user entity', userEntity);
-    await this.userRepository.save(userEntity);
+    const saveOne = await this.userRepository.save(userEntity);
     return true;
   }
 }

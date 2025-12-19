@@ -11,7 +11,7 @@ export class GeoPoint {
 @ObjectType()
 export class Crew {
   @Field()
-  id: number;
+  id: string;
 
   @Field()
   name: string;

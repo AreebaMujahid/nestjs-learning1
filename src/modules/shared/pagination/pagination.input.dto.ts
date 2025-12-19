@@ -1,16 +1,16 @@
-import { ObjectType, Min } from '@nestjs/graphql';
-import { IsOptional, IsPositive } from 'class-validator';
+import { ObjectType, Field, Int, InputType } from '@nestjs/graphql';
+import { IsOptional, IsPositive, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-
-@ObjectType()
+@InputType()
 export class PaginationDto {
+  @Field(() => Int, { nullable: true })
   @IsOptional()
   @Type(() => Number)
   @IsPositive()
-  limit: number = 10;
+  perPage: number = 10;
 
+  @Field(() => Int, { nullable: true })
   @IsOptional()
   @Type(() => Number)
-  @Min(0)
-  offset: number = 0;
+  page: number = 1;
 }

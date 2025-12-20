@@ -7,4 +7,7 @@ export class CountryDto {
 
   @Field()
   name: string;
+
+  @Field({ nullable: true })
+  flag: string;
 }

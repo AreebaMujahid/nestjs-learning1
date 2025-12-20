@@ -29,7 +29,11 @@ import { stripe } from '../stripe/stripe';
 import { FavouritelistingInput } from './dto/favourite-listing-input.dto';
 import { FavouriteListing } from './entities/favorourit-listing.entity';
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
-
+type CountryWithFlag = {
+  code: string;
+  name: string;
+  flag: string;
+};
 @Injectable()
 export class ListingService {
   constructor(
@@ -291,15 +295,26 @@ export class ListingService {
     });
     return packages;
   }
+  getFlagEmoji(code: string) {
+    return code
+      .toUpperCase()
+      .replace(/./g, (char) =>
+        String.fromCodePoint(127397 + char.charCodeAt(0)),
+      );
+  }
   async getAllCountries() {
-    const countryObj = countries.getNames('en', {
+    const countryObj = await countries.getNames('en', {
       select: 'official',
     });
-
-    return [...Object.entries(countryObj)].map(([code, name]) => ({
-      code,
-      name,
-    }));
+    const countriesWithEmoji: CountryWithFlag[] = [];
+    for (const [code, name] of Object.entries(countryObj)) {
+      countriesWithEmoji.push({
+        code,
+        name,
+        flag: this.getFlagEmoji(code),
+      });
+    }
+    return countriesWithEmoji;
   }
   //HELPER FUNCTION
   async updateListingImages(

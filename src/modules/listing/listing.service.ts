@@ -71,6 +71,16 @@ export class ListingService {
   //6- (done)service image upload in db
   //7 - ensure country type using country package
   //8- simple string input validations
+
+  //(Three edge cases for listing package)
+  //1-Listing with a selected package → user pays → you want it publicly visible with priority.
+  //2-Listing without a package → no payment → publicly visible but no priority.
+  //3-listing with package but payment nhi hai , in that case not show this listing publically
+
+  //During Prority Fetching I will check three things now :(AND CONDITION OF THESE 3)
+  //1- package type not null
+  //2- is paid true in featurepayment table
+  //3- package expiry date
   async createListing(
     input: CreateListinginput,
     images: Promise<FileUpload>[] | null,
@@ -139,37 +149,34 @@ export class ListingService {
         listingImages.push(listingImage);
       }
     }
-
-    if (packageType) {
-      const listing = this.listingRepository.create({
-        serviceType: input.serviceType,
-        commercialPrice: input.commercialPrice,
-        category: category,
-        subCategory: subCategory,
-        name: input.name,
-        description: input.description,
-        startTime: input.startTime,
-        endTime: input.endTime,
-        contactNo: input.contactNo,
-        country: input.country,
-        address: input.address,
-        packageCreatedAt: new Date(),
-        //if package type exists in param , then store , else store undefined
-        package: input.packageType ? packageType : undefined,
-        //owner: ExistingUser,
-        locationCoordinates: {
-          type: 'Point',
-          coordinates: [
-            input.locationCoordinates.lng,
-            input.locationCoordinates.lat,
-          ],
-        },
-        images: listingImages,
-        owner: existingUser,
-      });
-      const savedListing = await this.listingRepository.save(listing);
-      return { success: true };
-    } else {
+    const listing = this.listingRepository.create({
+      serviceType: input.serviceType,
+      commercialPrice: input.commercialPrice,
+      category: category,
+      subCategory: subCategory,
+      name: input.name,
+      description: input.description,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      contactNo: input.contactNo,
+      country: input.country,
+      address: input.address,
+      packageCreatedAt: new Date(),
+      //if package type exists in param , then store , else store undefined
+      package: input.packageType ? packageType : undefined,
+      //owner: ExistingUser,
+      locationCoordinates: {
+        type: 'Point',
+        coordinates: [
+          input.locationCoordinates.lng,
+          input.locationCoordinates.lat,
+        ],
+      },
+      images: listingImages,
+      owner: existingUser,
+    });
+    const savedListing = await this.listingRepository.save(listing);
+    if (input.packageType) {
       const session = await this.stripeService.createCheckoutSession(
         input.priceId,
         {
@@ -178,6 +185,8 @@ export class ListingService {
       );
       return { sessionId: session };
     }
+
+    return { succes: true };
   }
   async fetchAllistings(input: FetchAllListingsInput, user: JwtTokenPayload) {
     return this.listingRepository

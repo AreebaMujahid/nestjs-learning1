@@ -94,6 +94,7 @@ export class WebhookController {
           status: 'success',
           stripePaymentId: session.payment_intent,
           listing: listing,
+          isPaid: true,
         });
         await this.featurePaymentRepository.save(payment);
 

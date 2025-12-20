@@ -23,6 +23,10 @@ export class FeaturePayment {
   @Column()
   status: string;
 
+  //changing ispaid to true , whenever payemnet is successfully done by checking through webhook , if isPaid true , only then that listing will get priority during fetch
+  @Column({ default: false })
+  isPaid: boolean;
+
   @Column({ nullable: true })
   stripePaymentId: string;
 

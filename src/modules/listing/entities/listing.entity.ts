@@ -93,7 +93,7 @@ export class Listing {
     onDelete: 'SET NULL',
     nullable: true,
   })
-  package?: Package;
+  package?: Package | null;
 
   @ManyToOne(() => User, (user) => user.listings, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'owner_id' })

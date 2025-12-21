@@ -179,9 +179,7 @@ export class ListingService {
     if (input.packageType) {
       const session = await this.stripeService.createCheckoutSession(
         input.priceId,
-        {
-          listingData: input,
-        },
+        savedListing,
       );
       return { sessionId: session };
     }
@@ -425,7 +423,9 @@ export class ListingService {
   ) {
     const listing = await this.listingRepository.findOne({
       where: { id: input.listingId },
+      relations: ['package'],
     });
+    console.log('listing is:', listing);
     if (!listing) {
       throw new NotFoundException('Listing not found');
     }
@@ -483,7 +483,7 @@ export class ListingService {
         listingId: listing.id.toString(),
         previousPackageId: previousPackageId?.toString() || null,
         targetPackageId: targetedPackage.id.toString(),
-        upgradeType: 'LISTING_PACKAGE_UPGRADE',
+        flowType: 'UPGRADE_LISTING',
       },
       success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/cancel`,

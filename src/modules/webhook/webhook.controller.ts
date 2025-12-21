@@ -40,63 +40,74 @@ export class WebhookController {
       case 'checkout.session.completed': {
         const session = event.data.object as any;
         const metadata = session.metadata;
-        const listingId = Number(metadata.listingId);
-        const targetPackageId = Number(metadata.targetedPackageId);
-        const previousPackageId = metadata.previousPackageId
-          ? Number(metadata.previousPackageId)
-          : null;
 
-        // Fetch existing listing
-        let listing = await this.listingRepository.findOne({
+        console.log('I am in webhook controler', metadata);
+        console.log('listingid is', metadata.listingId);
+        const listingId = Number(metadata.listingId);
+        const flowType = metadata.flowType;
+
+        if (!listingId || !flowType) {
+          this.logger.error(
+            'Missing listingId or flowType in metadata',
+            metadata,
+          );
+          return res.status(400).send('Invalid metadata');
+        }
+
+        const listing = await this.listingRepository.findOne({
           where: { id: listingId },
           relations: ['package'],
         });
 
-        // If listing does not exist, create it
         if (!listing) {
-          listing = this.listingRepository.create({
-            name: metadata.name,
-            description: metadata.description,
-            package: { id: metadata.packageId },
-            owner: { id: metadata.ownerId },
+          this.logger.error(`Listing ${listingId} not found`);
+          return res.status(400).send('Listing not found');
+        }
+
+        if (flowType === 'CREATE_LISTING') {
+          // First-time purchase: we don't need targetPackageId
+          // Just record the payment
+          await this.featurePaymentRepository.save(
+            this.featurePaymentRepository.create({
+              amount: session.amount_total / 100,
+              currency: session.currency,
+              status: 'success',
+              stripePaymentId: session.payment_intent,
+              listing,
+              isPaid: true,
+            }),
+          );
+
+          this.logger.log(`Payment recorded for listing ${listing.id}`);
+        } else if (flowType === 'UPGRADE_LISTING') {
+          // Handle upgrade scenario
+          const targetPackageId = Number(metadata.targetPackageId);
+          const targetPackage = await this.packageRepository.findOne({
+            where: { id: targetPackageId },
           });
-          await this.listingRepository.save(listing);
-          this.logger.log(`Listing ${listingId} created.`);
-        }
 
-        // Fetch the target package
-        const targetPackage = await this.packageRepository.findOne({
-          where: { id: targetPackageId },
-        });
+          if (!targetPackage) {
+            return res.status(404).send('Target package not found');
+          }
 
-        if (!targetPackage) {
-          this.logger.warn(`Target package ${targetPackageId} not found`);
-          return res.status(404).send('Target package not found');
-        }
-
-        // Upgrade or first-time purchase
-        if (!listing.package || listing.package.id !== targetPackageId) {
           listing.package = targetPackage;
           await this.listingRepository.save(listing);
-          this.logger.log(
-            `Listing ${listing.id} package set/updated to ${targetPackage.name}`,
+
+          await this.featurePaymentRepository.save(
+            this.featurePaymentRepository.create({
+              amount: session.amount_total / 100,
+              currency: session.currency,
+              status: 'success',
+              stripePaymentId: session.payment_intent,
+              listing,
+              isPaid: true,
+            }),
           );
-        } else {
+
           this.logger.log(
-            `Listing ${listing.id} already has package ${targetPackage.name}, no change.`,
+            `Listing ${listing.id} upgraded to package ${targetPackage.name}`,
           );
         }
-
-        // Save feature payment
-        const payment = this.featurePaymentRepository.create({
-          amount: session.amount_total / 100,
-          currency: session.currency,
-          status: 'success',
-          stripePaymentId: session.payment_intent,
-          listing: listing,
-          isPaid: true,
-        });
-        await this.featurePaymentRepository.save(payment);
 
         break;
       }

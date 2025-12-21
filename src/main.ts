@@ -17,6 +17,10 @@ async function bootstrap() {
     bodyParser.raw({
       type: 'application/json',
     }),
+    (req, res, next) => {
+      (req as any).rawBody = req.body;
+      next();
+    },
   );
   await app.listen(process.env.PORT ?? 3000);
 }

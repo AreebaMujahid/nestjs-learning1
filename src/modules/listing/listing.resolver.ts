@@ -8,7 +8,10 @@ import { AuthGuard } from 'src/utilities/guards/auth.guard';
 import { UseGuards } from '@nestjs/common';
 import { CurrentUser } from 'src/utilities/decorators/user.decorator';
 import type { JwtTokenPayload } from 'src/utilities/types/token-payload';
-import { ListingResponse } from './dto/listing-response.dto';
+import {
+  ListingResponse,
+  ListingResponseWithFavourite,
+} from './dto/listing-response.dto';
 import { UpdateListingInput } from './dto/update-listing-input.dto';
 import { FetchAllListingsInput } from './dto/fetch-all-listings-filter.dto';
 import { PackageDTO } from './dto/package.dto';
@@ -105,7 +108,7 @@ export class ListingResolver {
   }
 
   //fetch listing by id ka end point , then test edit ka flow
-  @Query(() => ListingResponse)
+  @Query(() => ListingResponseWithFavourite)
   @UseGuards(AuthGuard)
   async getListingById(
     @Args('id', { type: () => Int }) id: number,

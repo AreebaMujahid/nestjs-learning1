@@ -103,7 +103,7 @@ export class Listing {
   @OneToMany(() => FeaturePayment, (payment) => payment.listing)
   payments: FeaturePayment[];
 
-  @OneToMany(() => ListingImage, (image) => image.listing)
+  @OneToMany(() => ListingImage, (image) => image.listing, { cascade: true })
   images: ListingImage[];
 
   @OneToMany(() => FavouriteListing, (fav) => fav.listing)

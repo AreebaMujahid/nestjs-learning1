@@ -184,6 +184,7 @@ export class ListingService {
       owner: existingUser,
     });
     const savedListing = await this.listingRepository.save(listing);
+    console.log('I am in create listing', savedListing);
     if (input.packageType) {
       const session = await this.stripeService.createCheckoutSession(
         input.priceId,
@@ -194,6 +195,9 @@ export class ListingService {
 
     return { succes: true };
   }
+  //latest createc on top(order)
+  //images fetch
+  //listings not repeated not less
   async fetchAllistings(input: FetchAllListingsInput, user: JwtTokenPayload) {
     const { page = 1, perPage = 10 } = input.pagination || {};
     const skip = (page - 1) * perPage;
@@ -206,12 +210,12 @@ export class ListingService {
       .leftJoin('listing.owner', 'owner')
       .where('owner.id = :ownerId', { ownerId: user.userId })
       .andWhere('listing.isActive = :isActive', { isActive: input.isActive })
-      .distinctOn(['listing.id']) // ensures one row per listing as multiple images per listing
-      .orderBy('listing.id', 'DESC')
+      //.distinctOn(['listing.id']) // ensures one row per listing as multiple images per listing
+      .orderBy('listing.createdAt', 'DESC')
       .skip(skip)
       .take(perPage)
       .getMany();
-
+    console.log('listings are with images ', listings);
     const total = await this.listingRepository.count({
       where: {
         owner: { id: user.userId },

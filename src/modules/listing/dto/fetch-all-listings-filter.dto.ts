@@ -5,7 +5,7 @@ import { Int } from '@nestjs/graphql';
 
 @InputType()
 export class FetchAllListingsInput {
-  @Field()
+  @Field({ nullable: true })
   isActive: boolean;
 
   @Field(() => PaginationDto, { nullable: true })

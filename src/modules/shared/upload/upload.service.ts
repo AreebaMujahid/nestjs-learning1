@@ -15,6 +15,8 @@ export class UploadService {
     });
   }
   async upload(fileName: string, file: Buffer): Promise<string> {
+    const bucket = this.configService.getOrThrow('S3_BUCKET');
+    const region = this.configService.getOrThrow('AWS_S3_REGION');
     await this.s3Client.send(
       new PutObjectCommand({
         Bucket: this.configService.getOrThrow('S3_BUCKET'),
@@ -24,6 +26,6 @@ export class UploadService {
     );
     console.log(this.configService.getOrThrow('S3_BUCKET'));
     const safeFileName = encodeURIComponent(fileName);
-    return `https://cruiserslink-v2-profile.s3.${this.configService.get('AWS_S3_REGION')}.amazonaws.com/${safeFileName}`;
+    return `https://${bucket}.s3.${region}.amazonaws.com/${safeFileName}`;
   }
 }

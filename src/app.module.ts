@@ -17,6 +17,7 @@ import { SharedModule } from './modules/shared/shared.module';
 import { ListingModule } from './modules/listing/listing.module';
 import { StripeModule } from './modules/stripe/stripe.module';
 import * as bodyParser from 'body-parser';
+import { MapModule } from './modules/map/map.module';
 const env = process.env.NODE_ENV || 'development';
 @Module({
   imports: [
@@ -43,6 +44,7 @@ const env = process.env.NODE_ENV || 'development';
     SharedModule,
     ListingModule,
     StripeModule,
+    MapModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthResolver],

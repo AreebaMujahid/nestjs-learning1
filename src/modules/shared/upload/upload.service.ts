@@ -23,6 +23,7 @@ export class UploadService {
       }),
     );
     console.log(this.configService.getOrThrow('S3_BUCKET'));
-    return `https://cruiserslink-v2-profile.s3.${this.configService.get('AWS_S3_REGION')}.amazonaws.com/${fileName}`;
+    const safeFileName = encodeURIComponent(fileName);
+    return `https://cruiserslink-v2-profile.s3.${this.configService.get('AWS_S3_REGION')}.amazonaws.com/${safeFileName}`;
   }
 }

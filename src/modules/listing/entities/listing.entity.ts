@@ -17,6 +17,7 @@ import { ServiceType } from 'src/utilities/enums/service-type';
 import { User } from 'src/modules/user/entity/user.entity';
 import { FeaturePayment } from './feature-payment.entity';
 import { ListingImage } from './listing-images.entity';
+import { FavouriteListing } from './favorourit-listing.entity';
 @Entity()
 export class Listing {
   @PrimaryGeneratedColumn(ID)
@@ -102,6 +103,9 @@ export class Listing {
   @OneToMany(() => FeaturePayment, (payment) => payment.listing)
   payments: FeaturePayment[];
 
-  @OneToMany(() => ListingImage, (image) => image.listing, { cascade: true })
+  @OneToMany(() => ListingImage, (image) => image.listing)
   images: ListingImage[];
+
+  @OneToMany(() => FavouriteListing, (fav) => fav.listing)
+  favourites: FavouriteListing[];
 }

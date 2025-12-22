@@ -23,8 +23,13 @@ export class UserService {
     if (!dbUser) {
       throw new NotFoundException('User not found');
     }
-    console.log(dbUser);
-    return dbUser;
+    return {
+      ...dbUser,
+      currentLocation: {
+        latitude: dbUser.currentLocation?.coordinates[1],
+        longitude: dbUser.currentLocation?.coordinates[0],
+      },
+    };
   }
   // async editProfile(editProfileInput: EditProfileInput, user: JwtTokenPayload) {
   //   const hasCrewUpdate = !!editProfileInput.crew?.length;

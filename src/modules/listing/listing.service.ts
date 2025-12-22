@@ -26,8 +26,14 @@ import { ListingImage } from './entities/listing-images.entity';
 import { EditListingInput } from './dto/edit-listing-input.dto';
 import { UpgradeListingPackageInput } from './dto/upgrade-listing-package-input.dto';
 import { stripe } from '../stripe/stripe';
+import { FavouritelistingInput } from './dto/favourite-listing-input.dto';
+import { FavouriteListing } from './entities/favorourit-listing.entity';
 countries.registerLocale(require('i18n-iso-countries/langs/en.json'));
-
+type CountryWithFlag = {
+  code: string;
+  name: string;
+  flag: string;
+};
 @Injectable()
 export class ListingService {
   constructor(
@@ -45,6 +51,8 @@ export class ListingService {
     private readonly featurePaymentRepository: Repository<FeaturePayment>,
     @InjectRepository(ListingImage)
     private readonly listingImageRepository: Repository<ListingImage>,
+    @InjectRepository(FavouriteListing)
+    private readonly favouriteListingRepository: Repository<FavouriteListing>,
     private uploadService: UploadService,
     private stripeService: StripeService,
   ) {}
@@ -287,15 +295,26 @@ export class ListingService {
     });
     return packages;
   }
+  getFlagEmoji(code: string) {
+    return code
+      .toUpperCase()
+      .replace(/./g, (char) =>
+        String.fromCodePoint(127397 + char.charCodeAt(0)),
+      );
+  }
   async getAllCountries() {
-    const countryObj = countries.getNames('en', {
+    const countryObj = await countries.getNames('en', {
       select: 'official',
     });
-
-    return [...Object.entries(countryObj)].map(([code, name]) => ({
-      code,
-      name,
-    }));
+    const countriesWithEmoji: CountryWithFlag[] = [];
+    for (const [code, name] of Object.entries(countryObj)) {
+      countriesWithEmoji.push({
+        code,
+        name,
+        flag: this.getFlagEmoji(code),
+      });
+    }
+    return countriesWithEmoji;
   }
   //HELPER FUNCTION
   async updateListingImages(
@@ -423,15 +442,24 @@ export class ListingService {
     return savedOne;
   }
   // src/modules/listing/listing.service.ts
-  async getListingById(id: number) {
+  async getListingById(id: number, user: JwtTokenPayload) {
     const listing = await this.listingRepository.findOne({
       where: { id },
       relations: ['images', 'category', 'subCategory', 'package'],
     });
-
+    console.log('user id :', user.userId);
     if (!listing) throw new Error('Listing not found');
-
-    return listing;
+    const favourite = await this.favouriteListingRepository.findOne({
+      where: {
+        user: { id: user?.userId },
+        listing: { id },
+      },
+    });
+    const isFavourite = !!favourite;
+    return {
+      ...listing,
+      isFavourite,
+    };
   }
   //edge case: might be possible kay non-featured se vo featured maiy convert ho rha ho , by selecting a package
   async updateListingPackageCheckout(
@@ -506,5 +534,45 @@ export class ListingService {
       cancel_url: `${process.env.FRONTEND_URL}/cancel`,
     });
     return session.url;
+  }
+  async addListingToFavourite(
+    input: FavouritelistingInput,
+    user: JwtTokenPayload,
+  ) {
+    const listing = await this.listingRepository.findOne({
+      where: { id: Number(input.listingId) },
+    });
+    if (!listing) {
+      throw new NotFoundException('Listing not found');
+    }
+    if (listing.owner.id !== user.userId) {
+      throw new BadRequestException(
+        'You can only favourite/unfavourite your own listings only',
+      );
+    }
+    const alreadyFavourite = await this.favouriteListingRepository.findOne({
+      where: {
+        user: { id: user.userId },
+        listing: { id: Number(input.listingId) },
+      },
+    });
+    if (input.isFavourite) {
+      if (alreadyFavourite) {
+        throw new BadRequestException('Listing already in favourites');
+      }
+      const favourite = this.favouriteListingRepository.create({
+        user: { id: user.userId },
+        listing: { id: Number(input.listingId) },
+      });
+      await this.favouriteListingRepository.save(favourite);
+    }
+    if (!input.isFavourite) {
+      if (!alreadyFavourite) {
+        throw new BadRequestException('Listing is not in favourite');
+      }
+      //removing that row from table (need suggestion in PR)
+      await this.favouriteListingRepository.remove(alreadyFavourite);
+    }
+    return true;
   }
 }

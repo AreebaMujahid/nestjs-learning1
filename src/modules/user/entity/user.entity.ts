@@ -11,6 +11,7 @@ import { ID } from '@nestjs/graphql';
 import { Crew } from 'src/modules/crew/entity/crew.entity';
 import type { GeoPoint } from 'src/utilities/types/geojson.type';
 import { Listing } from 'src/modules/listing/entities/listing.entity';
+import { FavouriteListing } from 'src/modules/listing/entities/favorourit-listing.entity';
 @Entity()
 export class User {
   @PrimaryGeneratedColumn(ID)
@@ -98,4 +99,7 @@ export class User {
 
   @OneToMany(() => Listing, (listing) => listing.owner)
   listings: Listing[];
+
+  @OneToMany(() => FavouriteListing, (fav) => fav.user)
+  favouriteListings: FavouriteListing[];
 }

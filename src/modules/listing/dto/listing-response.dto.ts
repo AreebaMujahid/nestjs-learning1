@@ -87,4 +87,7 @@ export class ListingResponse {
 
   @Field()
   address: string;
+
+  @Field()
+  isFavourite: boolean;
 }

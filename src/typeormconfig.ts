@@ -8,6 +8,7 @@ import { Listing } from './modules/listing/entities/listing.entity';
 import { Package } from './modules/listing/entities/package.entity';
 import { FeaturePayment } from './modules/listing/entities/feature-payment.entity';
 import { ListingImage } from './modules/listing/entities/listing-images.entity';
+import { FavouriteListing } from './modules/listing/entities/favorourit-listing.entity';
 dotenv.config();
 const isProd = process.env.NODE_ENV === 'production';
 export const AppDataSource = new DataSource({
@@ -29,6 +30,7 @@ export const AppDataSource = new DataSource({
     Package,
     FeaturePayment,
     ListingImage,
+    FavouriteListing,
   ],
   migrations: isProd ? ['./dist/migrations/*.js'] : ['./src/migrations/*.ts'],
   migrationsTableName: 'migrations',

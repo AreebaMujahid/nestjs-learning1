@@ -545,10 +545,12 @@ export class ListingService {
   ) {
     const listing = await this.listingRepository.findOne({
       where: { id: Number(input.listingId) },
+      relations: ['owner'],
     });
     if (!listing) {
       throw new NotFoundException('Listing not found');
     }
+    console.log('listing.owner.id', listing.owner?.id);
     if (listing.owner.id !== user.userId) {
       throw new BadRequestException(
         'You can only favourite/unfavourite your own listings only',

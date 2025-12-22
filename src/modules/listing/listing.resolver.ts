@@ -16,6 +16,7 @@ import { CountryDto } from './dto/country.dto';
 import { EditListingInput } from './dto/edit-listing-input.dto';
 import { UpgradeListingPackageInput } from './dto/upgrade-listing-package-input.dto';
 import { CreateListingResult } from './dto/create-listing-response.dto';
+import { PaginatedListings } from './dto/fetch-all-listings-filter.dto';
 
 @Resolver()
 export class ListingResolver {
@@ -50,7 +51,7 @@ export class ListingResolver {
     );
   }
 
-  @Query(() => [ListingResponse])
+  @Query(() => PaginatedListings)
   @UseGuards(AuthGuard)
   async fetchAllListing(
     @Args('fetchAllListingsInput') fetchAllListingsInput: FetchAllListingsInput,

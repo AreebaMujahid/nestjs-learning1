@@ -396,6 +396,7 @@ export class AuthService {
     if (input.crew?.length) {
       userEntity.crew = input.crew as unknown as any[];
     }
+    userEntity.isProfileComplete = true;
     const saveOne = await this.userRepository.save(userEntity);
     return true;
   }

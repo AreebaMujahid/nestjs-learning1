@@ -344,8 +344,8 @@ export class AuthService {
         boatName: input.boatName || userEntity.boatName,
         contactNumber: input.contactNumber || userEntity.contactNumber,
         ownerCaptain: input.ownerCaptain || userEntity.ownerCaptain,
-        website: input.websiteUrl || userEntity.websiteUrl,
-        country: input.countryName || userEntity.countryName,
+        websiteUrl: input.websiteUrl || userEntity.websiteUrl,
+        countryName: input.countryName || userEntity.countryName,
         isProfileComplete: true,
       });
       // if (s3Url) {

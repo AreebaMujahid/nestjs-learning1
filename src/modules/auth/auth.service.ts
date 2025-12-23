@@ -392,12 +392,13 @@ export class AuthService {
       websiteUrl: input.websiteUrl,
       countryName: input.countryName,
       status: input.status,
+      isProfileComplete: true,
     });
     if (input.crew?.length) {
       userEntity.crew = input.crew as unknown as any[];
     }
-    userEntity.isProfileComplete = true;
     const saveOne = await this.userRepository.save(userEntity);
+    console.log(saveOne);
     return true;
   }
 }

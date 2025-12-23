@@ -381,24 +381,5 @@ export class AuthService {
     } catch (err) {
       console.error(`Error while completeing profile: ${err.message}`);
     }
-    const userEntity = await this.userRepository.findOne({
-      where: { id: user.userId },
-      relations: ['crew'],
-    });
-    if (!userEntity) throw new Error('User not found');
-    Object.assign(userEntity, {
-      boatName: input.boatName,
-      contactNumber: input.contactNumber,
-      ownerCaptain: input.ownerCaptain,
-      websiteUrl: input.websiteUrl,
-      countryName: input.countryName,
-      status: input.status,
-    });
-    if (input.crew?.length) {
-      userEntity.crew = input.crew as unknown as any[];
-    }
-    const saveOne = await this.userRepository.save(userEntity);
-    console.log(saveOne);
-    return true;
   }
 }

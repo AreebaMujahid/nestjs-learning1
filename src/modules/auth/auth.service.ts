@@ -346,6 +346,7 @@ export class AuthService {
         ownerCaptain: input.ownerCaptain || userEntity.ownerCaptain,
         website: input.websiteUrl || userEntity.websiteUrl,
         country: input.countryName || userEntity.countryName,
+        isProfileComplete: true,
       });
       // if (s3Url) {
       //   userEntity.profilePicture = s3Url;
@@ -392,7 +393,6 @@ export class AuthService {
       websiteUrl: input.websiteUrl,
       countryName: input.countryName,
       status: input.status,
-      isProfileComplete: true,
     });
     if (input.crew?.length) {
       userEntity.crew = input.crew as unknown as any[];

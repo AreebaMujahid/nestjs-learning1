@@ -6,6 +6,7 @@ import { VerifyOtpInput } from './dto/verifyOtp.input.dto';
 import { RefreshAccessTokenInput } from './dto/refreshaccesstoken.input.dto';
 import { FileUpload } from 'graphql-upload-ts';
 import { GraphQLUpload } from 'graphql-upload-ts';
+import { ResendOtpInputDto } from './dto/resendotp-input.dto';
 import {
   ForgotPasswordOtpInput,
   ForgotPasswordInput,
@@ -88,6 +89,10 @@ export class AuthResolver {
     @CurrentUser() user: JwtTokenPayload,
   ) {
     return this.authService.changePassword(changePasswordInput, user);
+  }
+  @Mutation(() => Boolean)
+  async resendOtp(@Args('input') input: ResendOtpInputDto) {
+    return this.authService.resendOtp(input);
   }
   @Mutation(() => Boolean)
   @UseGuards(AuthGuard)

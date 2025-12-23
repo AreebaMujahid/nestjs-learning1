@@ -30,6 +30,7 @@ import { ChangePasswordInput } from './dto/change-password.input.dto';
 import { CompleteProfileInput } from './dto/complete-profile.input.dto';
 import { UploadService } from '../shared/upload/upload.service';
 import { Crew } from '../crew/entity/crew.entity';
+import { ResendOtpInputDto } from './dto/resendotp-input.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -380,6 +381,27 @@ export class AuthService {
       }
     } catch (err) {
       console.error(`Error while completeing profile: ${err.message}`);
+    }
+  }
+  async resendOtp(input: ResendOtpInputDto) {
+    const normalizedEmail = input.email.toLowerCase();
+    const user = await this.userRepository.findOne({
+      where: { email: normalizedEmail },
+    });
+    if (!user) {
+      throw new NotFoundException('User does not exists');
+    }
+    const existingOtpPurpose = user.otpPurpose;
+    if (!existingOtpPurpose) {
+      if (user.isEmailVerified) {
+        return {
+          succes: true,
+          message: 'Email is already verfied',
+        };
+      }
+      else if {
+        existingOtpPurpose === OtpPurpose.EMAIL_VERIFICATION
+      }
     }
   }
 }
